@@ -1,0 +1,4 @@
+github.com/goplus/cobra v1.9.15 h1:KoR19rR22R6Z/P3acdT7lCJLX+k09HV0Qt50U/Kse2c=
+github.com/goplus/cobra v1.9.15/go.mod h1:p4LhfNJDKEpiGjGiNn0crUXL5dUPA5DX2ztYpEJR34E=
+github.com/qiniu/x v1.16.5 h1:+/cSm9m8F8sx6zJ4ylmsuhux8xVpxMHP/pzL8xv1Y9w=
+github.com/qiniu/x v1.16.5/go.mod h1:AiovSOCaRijaf3fj+0CBOpR1457pn24b0Vdb1JpwhII=

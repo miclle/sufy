@@ -1,0 +1,21 @@
+import (
+    "github.com/sufy-dev/sufy/sandbox"
+)
+
+var (
+    From string `flag:"from, usage: Pagination token for fetching the next page."`
+)
+
+use "list [flags]"
+
+short "List all sandboxes for the specified account and project."
+
+run => {
+    sandboxs, pagination := sandbox.list(context, from = From)!
+    echo "sandboxs:"
+    for sbx in sandboxs {
+        echo " ", sbx.ID
+    }
+    echo "pagination:"
+    echo "  next:", pagination.Next
+}
