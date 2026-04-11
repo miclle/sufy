@@ -19,7 +19,8 @@ type Cmd_sandbox_create struct {
 type Cmd_sandbox_list struct {
 	xcmd.Command
 	*App
-	From string `flag:"from, usage: Pagination token for fetching the next page."`
+	Limit int    `flag:"limit, usage: Limit the number of sandboxes returned. Default is 20, maximum is 100."`
+	From  string `flag:"from, usage: Pagination token for fetching the next page."`
 }
 type App struct {
 	xcmd.App
@@ -44,42 +45,42 @@ func (this *Cmd_sandbox_create) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_create) Classfname() string {
 	return "sandbox_create"
 }
-//line cmd/sufy/sandbox_list_cmd.gox:9
+//line cmd/sufy/sandbox_list_cmd.gox:10
 func (this *Cmd_sandbox_list) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_list_cmd.gox:9:1
+//line cmd/sufy/sandbox_list_cmd.gox:10:1
 	this.Use("list [flags]")
-//line cmd/sufy/sandbox_list_cmd.gox:11:1
+//line cmd/sufy/sandbox_list_cmd.gox:12:1
 	this.Short("List all sandboxes for the specified account and project.")
-//line cmd/sufy/sandbox_list_cmd.gox:13:1
+//line cmd/sufy/sandbox_list_cmd.gox:14:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
 		sandboxs, pagination := func() (_xgo_ret []*sandbox.Sandbox, _xgo_ret2 sandbox.ListPagination) {
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
 			var _xgo_err error
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
-			_xgo_ret, _xgo_ret2, _xgo_err = sandbox.List(this.Context(), &sandbox.ListOptions{From: this.From})
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
+			_xgo_ret, _xgo_ret2, _xgo_err = sandbox.List(this.Context(), &sandbox.ListOptions{Limit: this.Limit, From: this.From})
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
 			if _xgo_err != nil {
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
-				_xgo_err = errors.NewFrame(_xgo_err, "sandbox.list(context, from = From)", "cmd/sufy/sandbox_list_cmd.gox", 14, "main.Main")
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
+				_xgo_err = errors.NewFrame(_xgo_err, "sandbox.list(context, limit = Limit, from = From)", "cmd/sufy/sandbox_list_cmd.gox", 15, "main.Main")
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
 				panic(_xgo_err)
 			}
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
+//line cmd/sufy/sandbox_list_cmd.gox:15:1
 			return
 		}()
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
+//line cmd/sufy/sandbox_list_cmd.gox:16:1
 		fmt.Println("sandboxs:")
 		for
-//line cmd/sufy/sandbox_list_cmd.gox:16:1
-		_, sbx := range sandboxs {
 //line cmd/sufy/sandbox_list_cmd.gox:17:1
+		_, sbx := range sandboxs {
+//line cmd/sufy/sandbox_list_cmd.gox:18:1
 			fmt.Println(" ", sbx.ID)
 		}
-//line cmd/sufy/sandbox_list_cmd.gox:19:1
-		fmt.Println("pagination:")
 //line cmd/sufy/sandbox_list_cmd.gox:20:1
+		fmt.Println("pagination:")
+//line cmd/sufy/sandbox_list_cmd.gox:21:1
 		fmt.Println("  next:", pagination.Next)
 	})
 }
