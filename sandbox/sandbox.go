@@ -65,8 +65,9 @@ type Sandbox struct {
 
 // ListPagination contains pagination information for listing sandboxes.
 type ListPagination struct {
-	Total int
-	Next  string
+	// Next is the pagination token for fetching the next page. If it's empty,
+	// there are no more pages.
+	Next string
 }
 
 // ListOptions contains options for listing sandboxes.
