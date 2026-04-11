@@ -11,6 +11,9 @@ import (
 
 const _ = true
 
+type App struct {
+	xcmd.App
+}
 type Cmd_sandbox struct {
 	xcmd.Command
 	*App
@@ -26,10 +29,13 @@ type Cmd_sandbox_list struct {
 	Limit int    `flag:"limit, usage: Limit the number of sandboxes returned. Default is 20, maximum is 100."`
 	From  string `flag:"from, usage: Pagination token for fetching the next page."`
 }
-type App struct {
-	xcmd.App
+//line cmd/sufy/main_app.gox:1
+func (this *App) MainEntry() {
+//line cmd/sufy/main_app.gox:1:1
+	this.Use("sufy")
+//line cmd/sufy/main_app.gox:3:1
+	this.Short("sufy - A unified tool to manage your SUFY cloud services")
 }
-
 func (this *App) Main() {
 	_xgo_obj0 := &Cmd_sandbox{App: this}
 	_xgo_obj1 := &Cmd_sandbox_create{App: this}

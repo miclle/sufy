@@ -1,0 +1,3 @@
+use "sufy"
+
+short "sufy - A unified tool to manage your SUFY cloud services"
