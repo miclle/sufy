@@ -1,0 +1,7 @@
+use "sandbox"
+
+short "Sandbox manage sandboxes, execute commands, copy files, and more from your terminal."
+
+run => {
+	help
+}

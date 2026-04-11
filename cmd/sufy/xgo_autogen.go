@@ -11,6 +11,10 @@ import (
 
 const _ = true
 
+type Cmd_sandbox struct {
+	xcmd.Command
+	*App
+}
 type Cmd_sandbox_create struct {
 	xcmd.Command
 	*App
@@ -27,9 +31,26 @@ type App struct {
 }
 
 func (this *App) Main() {
-	_xgo_obj0 := &Cmd_sandbox_create{App: this}
-	_xgo_obj1 := &Cmd_sandbox_list{App: this}
-	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1)
+	_xgo_obj0 := &Cmd_sandbox{App: this}
+	_xgo_obj1 := &Cmd_sandbox_create{App: this}
+	_xgo_obj2 := &Cmd_sandbox_list{App: this}
+	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2)
+}
+//line cmd/sufy/sandbox_cmd.gox:1
+func (this *Cmd_sandbox) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_cmd.gox:1:1
+	this.Use("sandbox")
+//line cmd/sufy/sandbox_cmd.gox:3:1
+	this.Short("Sandbox manage sandboxes, execute commands, copy files, and more from your terminal.")
+//line cmd/sufy/sandbox_cmd.gox:5:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_cmd.gox:6:1
+		this.Help()
+	})
+}
+func (this *Cmd_sandbox) Classfname() string {
+	return "sandbox"
 }
 //line cmd/sufy/sandbox_create_cmd.gox:5
 func (this *Cmd_sandbox_create) Main(_xgo_arg0 string) {
