@@ -82,33 +82,45 @@ func (this *Cmd_sandbox_list) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_list_cmd.gox:14:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_list_cmd.gox:15:1
-		sandboxs, pagination := func() (_xgo_ret []*sandbox.Sandbox, _xgo_ret2 sandbox.ListPagination) {
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
-			var _xgo_err error
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
-			_xgo_ret, _xgo_ret2, _xgo_err = sandbox.List(this.Context(), &sandbox.ListOptions{Limit: this.Limit, From: this.From})
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
-			if _xgo_err != nil {
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
-				_xgo_err = errors.NewFrame(_xgo_err, "sandbox.list(context, limit = Limit, from = From)", "cmd/sufy/sandbox_list_cmd.gox", 15, "main.Main")
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
-				panic(_xgo_err)
-			}
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
-			return
-		}()
+		var limit *int32
 //line cmd/sufy/sandbox_list_cmd.gox:16:1
-		fmt.Println("sandboxs:")
-		for
+		if this.Limit > 0 {
 //line cmd/sufy/sandbox_list_cmd.gox:17:1
-		_, sbx := range sandboxs {
+			v := int32(this.Limit)
 //line cmd/sufy/sandbox_list_cmd.gox:18:1
-			fmt.Println(" ", sbx.ID)
+			limit = &v
 		}
 //line cmd/sufy/sandbox_list_cmd.gox:20:1
-		fmt.Println("pagination:")
+		var nextToken *string
 //line cmd/sufy/sandbox_list_cmd.gox:21:1
-		fmt.Println("  next:", pagination.Next)
+		if this.From != "" {
+//line cmd/sufy/sandbox_list_cmd.gox:22:1
+			nextToken = &this.From
+		}
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+		sandboxes := func() (_xgo_ret []sandbox.ListedSandbox) {
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+			var _xgo_err error
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+			_xgo_ret, _xgo_err = sandbox.List(this.Context(), &sandbox.ListParams{Limit: limit, NextToken: nextToken})
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+			if _xgo_err != nil {
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+				_xgo_err = errors.NewFrame(_xgo_err, "sandbox.list(context, limit = limit, nextToken = nextToken)", "cmd/sufy/sandbox_list_cmd.gox", 24, "main.Main")
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+				panic(_xgo_err)
+			}
+//line cmd/sufy/sandbox_list_cmd.gox:24:1
+			return
+		}()
+//line cmd/sufy/sandbox_list_cmd.gox:25:1
+		fmt.Println("sandboxes:")
+		for
+//line cmd/sufy/sandbox_list_cmd.gox:26:1
+		_, sbx := range sandboxes {
+//line cmd/sufy/sandbox_list_cmd.gox:27:1
+			fmt.Println(" ", sbx.SandboxID)
+		}
 	})
 }
 func (this *Cmd_sandbox_list) Classfname() string {

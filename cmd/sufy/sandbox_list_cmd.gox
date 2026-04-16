@@ -4,7 +4,7 @@ import (
 
 var (
 	Limit int    `flag:"limit, usage: Limit the number of sandboxes returned. Default is 20, maximum is 100."`
-    From  string `flag:"from, usage: Pagination token for fetching the next page."`
+	From  string `flag:"from, usage: Pagination token for fetching the next page."`
 )
 
 use "list [flags]"
@@ -12,11 +12,18 @@ use "list [flags]"
 short "List all sandboxes for the specified account and project."
 
 run => {
-    sandboxs, pagination := sandbox.list(context, limit = Limit, from = From)!
-    echo "sandboxs:"
-    for sbx in sandboxs {
-        echo " ", sbx.ID
+    var limit *int32
+    if Limit > 0 {
+        v := int32(Limit)
+        limit = &v
     }
-    echo "pagination:"
-    echo "  next:", pagination.Next
+    var nextToken *string
+    if From != "" {
+        nextToken = &From
+    }
+    sandboxes := sandbox.list(context, limit = limit, nextToken = nextToken)!
+    echo "sandboxes:"
+    for sbx in sandboxes {
+        echo " ", sbx.SandboxID
+    }
 }
