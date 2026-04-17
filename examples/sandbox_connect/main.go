@@ -23,19 +23,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/sufy-dev/sufy/examples/internal/exampleutil"
 	"github.com/sufy-dev/sufy/sandbox"
 )
 
 func main() {
-	apiKey := os.Getenv("SUFY_API_KEY")
-	if apiKey == "" {
-		log.Fatal("SUFY_API_KEY environment variable is required")
-	}
-
-	c := sandbox.New(&sandbox.Config{
-		APIKey:  apiKey,
-		BaseURL: os.Getenv("SUFY_BASE_URL"),
-	})
+	c := exampleutil.MustNewClient()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()

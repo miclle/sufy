@@ -35,6 +35,6 @@ sandbox-examples:
 	@for dir in examples/sandbox_*/; do \
 		name=$$(basename $$dir); \
 		echo "=== $$name ==="; \
-		go run ./$$dir || exit 1; \
+		go run ./$$dir $(if $(AUTH),-auth $(AUTH)) || exit 1; \
 		echo ""; \
 	done

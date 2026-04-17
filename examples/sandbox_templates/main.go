@@ -20,22 +20,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
+	"github.com/sufy-dev/sufy/examples/internal/exampleutil"
 	"github.com/sufy-dev/sufy/sandbox"
 )
 
 func main() {
-	apiKey := os.Getenv("SUFY_API_KEY")
-	if apiKey == "" {
-		log.Fatal("SUFY_API_KEY environment variable is required")
-	}
-
-	c := sandbox.New(&sandbox.Config{
-		APIKey:  apiKey,
-		BaseURL: os.Getenv("SUFY_BASE_URL"),
-	})
+	c := exampleutil.MustNewClient()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
@@ -147,28 +139,22 @@ func main() {
 		}
 	}
 
-	// 7. Assign template tags.
-	fmt.Println("\n=== assign template tags ===")
-	tagResult, err := c.AssignTemplateTags(ctx, sandbox.ManageTagsParams{
-		Target: fmt.Sprintf("%s:%s", templateName, "v1"),
-		Tags:   []string{"latest", "stable"},
-	})
-	if err != nil {
-		fmt.Printf("AssignTemplateTags failed: %v\n", err)
-	} else {
-		fmt.Printf("tags assigned, build: %s, tags: %v\n", tagResult.BuildID, tagResult.Tags)
-	}
-
-	// 8. Delete template tags.
-	fmt.Println("\n=== delete template tags ===")
-	if err := c.DeleteTemplateTags(ctx, sandbox.DeleteTagsParams{
-		Name: templateName,
-		Tags: []string{"stable"},
-	}); err != nil {
-		fmt.Printf("DeleteTemplateTags failed: %v\n", err)
-	} else {
-		fmt.Println("tag 'stable' deleted")
-	}
+	// 7. Assign / delete template tags.
+	//
+	// AssignTemplateTags reassigns tags between *already tagged* template
+	// builds via a "name:tag" target reference. A freshly created template
+	// has no initial tag, so these APIs are documented here without a live
+	// call to keep the example deterministic. Real callers should invoke
+	// them against a template whose build is complete and already tagged.
+	fmt.Println("\n=== template tags (API reference) ===")
+	fmt.Println("AssignTemplateTags: c.AssignTemplateTags(ctx, sandbox.ManageTagsParams{")
+	fmt.Println("    Target: \"<template-name>:<existing-tag>\",")
+	fmt.Println("    Tags:   []string{\"latest\"},")
+	fmt.Println("})")
+	fmt.Println("DeleteTemplateTags: c.DeleteTemplateTags(ctx, sandbox.DeleteTagsParams{")
+	fmt.Println("    Name: \"<template-name>\",")
+	fmt.Println("    Tags: []string{\"stale-tag\"},")
+	fmt.Println("})")
 
 	// 9. Look up a template by alias.
 	fmt.Println("\n=== get template by alias ===")
