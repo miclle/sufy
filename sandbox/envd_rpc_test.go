@@ -1226,6 +1226,125 @@ func TestPtyKill(t *testing.T) {
 }
 
 // =========================================================================
+// 5. CommandHandle / Options / ReadStream / WatchDir supplementary tests.
+// =========================================================================
+
+func TestCommandsWaitPID(t *testing.T) {
+	pidCh := make(chan struct{})
+	close(pidCh)
+	h := &CommandHandle{pid: 42, pidCh: pidCh}
+	pid, err := h.WaitPID(context.Background())
+	if err != nil {
+		t.Fatalf("WaitPID error: %v", err)
+	}
+	if pid != 42 {
+		t.Errorf("pid = %d, want 42", pid)
+	}
+}
+
+func TestCommandsWaitPIDTimeout(t *testing.T) {
+	pidCh := make(chan struct{})
+	h := &CommandHandle{pid: 0, pidCh: pidCh}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := h.WaitPID(ctx)
+	if err != context.Canceled {
+		t.Errorf("WaitPID error = %v, want context.Canceled", err)
+	}
+}
+
+func TestCommandOptionOnPtyData(t *testing.T) {
+	fn := func(data []byte) { _ = data }
+	opts := applyCommandOpts([]CommandOption{WithOnPtyData(fn)})
+	if opts.onPtyData == nil {
+		t.Error("expected onPtyData to be set")
+	}
+}
+
+func TestCommandOptionStdin(t *testing.T) {
+	opts := applyCommandOpts([]CommandOption{WithStdin()})
+	if !opts.stdin {
+		t.Error("expected stdin to be true")
+	}
+}
+
+func TestFilesystemReadStream(t *testing.T) {
+	fileContent := []byte("streaming content")
+	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			t.Errorf("method = %q, want GET", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(fileContent)
+	}))
+	defer httpServer.Close()
+
+	sb := newTestSandboxWithHTTP(httpServer)
+	sb.client.config.HTTPClient.Transport = &rewriteTransport{
+		base:    httpServer.Client().Transport,
+		baseURL: httpServer.URL,
+	}
+	fs := &Filesystem{sandbox: sb}
+
+	rc, err := fs.ReadStream(context.Background(), "/test/stream.txt")
+	if err != nil {
+		t.Fatalf("ReadStream error: %v", err)
+	}
+	defer rc.Close()
+
+	data, err := io.ReadAll(rc)
+	if err != nil {
+		t.Fatalf("ReadAll error: %v", err)
+	}
+	if string(data) != "streaming content" {
+		t.Errorf("ReadStream = %q, want %q", string(data), "streaming content")
+	}
+}
+
+func TestFilesystemWatchDirStop(t *testing.T) {
+	handler := &testFilesystemHandler{
+		watchDirFn: func(ctx context.Context, _ *connect.Request[filesystem.WatchDirRequest], stream *connect.ServerStream[filesystem.WatchDirResponse]) error {
+			// Send start event.
+			if err := stream.Send(&filesystem.WatchDirResponse{
+				Event: &filesystem.WatchDirResponse_Start{
+					Start: &filesystem.WatchDirResponse_StartEvent{},
+				},
+			}); err != nil {
+				return err
+			}
+			// Block until context is canceled (simulating a long-lived watch).
+			<-ctx.Done()
+			return ctx.Err()
+		},
+	}
+	fs, ts := newTestFilesystem(handler)
+	defer ts.Close()
+
+	w, err := fs.WatchDir(context.Background(), "/watch")
+	if err != nil {
+		t.Fatalf("WatchDir error: %v", err)
+	}
+
+	// Stop should return without hanging.
+	done := make(chan struct{})
+	go func() {
+		w.Stop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Success — Stop returned.
+	case <-time.After(5 * time.Second):
+		t.Fatal("Stop() did not return within 5 seconds")
+	}
+
+	if err := w.Err(); err != nil {
+		t.Errorf("WatchHandle.Err() = %v, want nil", err)
+	}
+}
+
+// =========================================================================
 // 6. Pure-function / Option supplementary tests.
 // =========================================================================
 

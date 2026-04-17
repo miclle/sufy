@@ -23,10 +23,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/sufy-dev/sufy/auth"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/sufy-dev/sufy/sandbox/internal/apis"
 	"github.com/sufy-dev/sufy/sandbox/internal/reqid"
 )
@@ -51,6 +54,19 @@ type mockAPI struct {
 	deleteTemplateFn         func(ctx context.Context, templateID apis.TemplateID, editors ...apis.RequestEditorFn) (*apis.DeleteTemplateResponse, error)
 	getTemplateBuildStatusFn func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildStatusParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildStatusResponse, error)
 	getTemplateByAliasFn     func(ctx context.Context, alias string, editors ...apis.RequestEditorFn) (*apis.GetTemplateByAliasResponse, error)
+	updateTemplateFn         func(ctx context.Context, templateID apis.TemplateID, body apis.UpdateTemplateJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.UpdateTemplateResponse, error)
+	getTemplateBuildLogsFn   func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildLogsParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildLogsResponse, error)
+	startTemplateBuildV2Fn   func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, body apis.StartTemplateBuildV2JSONRequestBody, editors ...apis.RequestEditorFn) (*apis.StartTemplateBuildV2Response, error)
+	getTemplateFilesFn       func(ctx context.Context, templateID apis.TemplateID, hash string, editors ...apis.RequestEditorFn) (*apis.GetTemplateFilesResponse, error)
+	assignTemplateTagsFn     func(ctx context.Context, body apis.AssignTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.AssignTemplateTagsResponse, error)
+	deleteTemplateTagsFn     func(ctx context.Context, body apis.DeleteTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.DeleteTemplateTagsResponse, error)
+	getSandboxesMetricsFn    func(ctx context.Context, params *apis.GetSandboxesMetricsParams, editors ...apis.RequestEditorFn) (*apis.GetSandboxesMetricsResponse, error)
+
+	getInjectionRulesFn            func(ctx context.Context, editors ...apis.RequestEditorFn) (*apis.GetInjectionRulesResponse, error)
+	postInjectionRulesFn           func(ctx context.Context, body apis.PostInjectionRulesJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.PostInjectionRulesResponse, error)
+	deleteInjectionRulesRuleIDFn   func(ctx context.Context, ruleID apis.InjectionRuleID, editors ...apis.RequestEditorFn) (*apis.DeleteInjectionRulesRuleIDResponse, error)
+	getInjectionRulesRuleIDFn      func(ctx context.Context, ruleID apis.InjectionRuleID, editors ...apis.RequestEditorFn) (*apis.GetInjectionRulesRuleIDResponse, error)
+	putInjectionRulesRuleIDFn      func(ctx context.Context, ruleID apis.InjectionRuleID, body apis.PutInjectionRulesRuleIDJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.PutInjectionRulesRuleIDResponse, error)
 }
 
 func httpResponse(statusCode int) *http.Response {
@@ -134,7 +150,7 @@ func (m *mockAPI) RefreshSandboxWithBodyWithResponse(ctx context.Context, sandbo
 }
 
 func (m *mockAPI) GetSandboxesMetricsWithResponse(ctx context.Context, params *apis.GetSandboxesMetricsParams, editors ...apis.RequestEditorFn) (*apis.GetSandboxesMetricsResponse, error) {
-	panic("not implemented")
+	return m.getSandboxesMetricsFn(ctx, params, editors...)
 }
 
 // --- Template operations ---
@@ -164,7 +180,7 @@ func (m *mockAPI) DeleteTemplateWithResponse(ctx context.Context, templateID api
 }
 
 func (m *mockAPI) UpdateTemplateWithResponse(ctx context.Context, templateID apis.TemplateID, body apis.UpdateTemplateJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.UpdateTemplateResponse, error) {
-	panic("not implemented")
+	return m.updateTemplateFn(ctx, templateID, body, editors...)
 }
 
 func (m *mockAPI) UpdateTemplateWithBodyWithResponse(ctx context.Context, templateID apis.TemplateID, contentType string, body io.Reader, editors ...apis.RequestEditorFn) (*apis.UpdateTemplateResponse, error) {
@@ -200,7 +216,7 @@ func (m *mockAPI) GetTemplateBuildStatusWithResponse(ctx context.Context, templa
 }
 
 func (m *mockAPI) GetTemplateBuildLogsWithResponse(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildLogsParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildLogsResponse, error) {
-	panic("not implemented")
+	return m.getTemplateBuildLogsFn(ctx, templateID, buildID, params, editors...)
 }
 
 func (m *mockAPI) StartTemplateBuildWithResponse(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, editors ...apis.RequestEditorFn) (*apis.StartTemplateBuildResponse, error) {
@@ -208,7 +224,7 @@ func (m *mockAPI) StartTemplateBuildWithResponse(ctx context.Context, templateID
 }
 
 func (m *mockAPI) StartTemplateBuildV2WithResponse(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, body apis.StartTemplateBuildV2JSONRequestBody, editors ...apis.RequestEditorFn) (*apis.StartTemplateBuildV2Response, error) {
-	panic("not implemented")
+	return m.startTemplateBuildV2Fn(ctx, templateID, buildID, body, editors...)
 }
 
 func (m *mockAPI) StartTemplateBuildV2WithBodyWithResponse(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, contentType string, body io.Reader, editors ...apis.RequestEditorFn) (*apis.StartTemplateBuildV2Response, error) {
@@ -216,7 +232,7 @@ func (m *mockAPI) StartTemplateBuildV2WithBodyWithResponse(ctx context.Context, 
 }
 
 func (m *mockAPI) GetTemplateFilesWithResponse(ctx context.Context, templateID apis.TemplateID, hash string, editors ...apis.RequestEditorFn) (*apis.GetTemplateFilesResponse, error) {
-	panic("not implemented")
+	return m.getTemplateFilesFn(ctx, templateID, hash, editors...)
 }
 
 func (m *mockAPI) GetTemplateByAliasWithResponse(ctx context.Context, alias string, editors ...apis.RequestEditorFn) (*apis.GetTemplateByAliasResponse, error) {
@@ -224,7 +240,7 @@ func (m *mockAPI) GetTemplateByAliasWithResponse(ctx context.Context, alias stri
 }
 
 func (m *mockAPI) AssignTemplateTagsWithResponse(ctx context.Context, body apis.AssignTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.AssignTemplateTagsResponse, error) {
-	panic("not implemented")
+	return m.assignTemplateTagsFn(ctx, body, editors...)
 }
 
 func (m *mockAPI) AssignTemplateTagsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, editors ...apis.RequestEditorFn) (*apis.AssignTemplateTagsResponse, error) {
@@ -232,21 +248,21 @@ func (m *mockAPI) AssignTemplateTagsWithBodyWithResponse(ctx context.Context, co
 }
 
 func (m *mockAPI) DeleteTemplateTagsWithResponse(ctx context.Context, body apis.DeleteTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.DeleteTemplateTagsResponse, error) {
-	panic("not implemented")
+	return m.deleteTemplateTagsFn(ctx, body, editors...)
 }
 
 func (m *mockAPI) DeleteTemplateTagsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, editors ...apis.RequestEditorFn) (*apis.DeleteTemplateTagsResponse, error) {
 	panic("not implemented")
 }
 
-// --- Injection rule operations (stubs; not used by the SDK) ---
+// --- Injection rule operations ---
 
 func (m *mockAPI) GetInjectionRulesWithResponse(ctx context.Context, editors ...apis.RequestEditorFn) (*apis.GetInjectionRulesResponse, error) {
-	panic("not implemented")
+	return m.getInjectionRulesFn(ctx, editors...)
 }
 
 func (m *mockAPI) PostInjectionRulesWithResponse(ctx context.Context, body apis.PostInjectionRulesJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.PostInjectionRulesResponse, error) {
-	panic("not implemented")
+	return m.postInjectionRulesFn(ctx, body, editors...)
 }
 
 func (m *mockAPI) PostInjectionRulesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, editors ...apis.RequestEditorFn) (*apis.PostInjectionRulesResponse, error) {
@@ -254,15 +270,15 @@ func (m *mockAPI) PostInjectionRulesWithBodyWithResponse(ctx context.Context, co
 }
 
 func (m *mockAPI) DeleteInjectionRulesRuleIDWithResponse(ctx context.Context, ruleID apis.InjectionRuleID, editors ...apis.RequestEditorFn) (*apis.DeleteInjectionRulesRuleIDResponse, error) {
-	panic("not implemented")
+	return m.deleteInjectionRulesRuleIDFn(ctx, ruleID, editors...)
 }
 
 func (m *mockAPI) GetInjectionRulesRuleIDWithResponse(ctx context.Context, ruleID apis.InjectionRuleID, editors ...apis.RequestEditorFn) (*apis.GetInjectionRulesRuleIDResponse, error) {
-	panic("not implemented")
+	return m.getInjectionRulesRuleIDFn(ctx, ruleID, editors...)
 }
 
 func (m *mockAPI) PutInjectionRulesRuleIDWithResponse(ctx context.Context, ruleID apis.InjectionRuleID, body apis.PutInjectionRulesRuleIDJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.PutInjectionRulesRuleIDResponse, error) {
-	panic("not implemented")
+	return m.putInjectionRulesRuleIDFn(ctx, ruleID, body, editors...)
 }
 
 func (m *mockAPI) PutInjectionRulesRuleIDWithBodyWithResponse(ctx context.Context, ruleID apis.InjectionRuleID, contentType string, body io.Reader, editors ...apis.RequestEditorFn) (*apis.PutInjectionRulesRuleIDResponse, error) {
@@ -315,6 +331,35 @@ func TestAPIKeyEditor(t *testing.T) {
 	}
 	if got := req.Header.Get("X-API-Key"); got != "test-key" {
 		t.Errorf("expected X-API-Key 'test-key', got %q", got)
+	}
+}
+
+func TestAPIKeyEditorSkipsWhenAuthorizationSet(t *testing.T) {
+	editor := apiKeyEditor("test-key")
+	req, _ := http.NewRequest("GET", "https://example.com", nil)
+	req.Header.Set("Authorization", "Sufy ak:sig")
+	if err := editor(context.Background(), req); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := req.Header.Get("X-API-Key"); got != "" {
+		t.Errorf("expected X-API-Key to be empty when Authorization is set, got %q", got)
+	}
+}
+
+func TestCredentialsEditor(t *testing.T) {
+	cred := auth.New("test-ak", "test-sk")
+	editor := credentialsEditor(cred)
+	req, _ := http.NewRequest("GET", "https://example.com/injection-rules", nil)
+	req.Header.Set("Content-Type", "application/json")
+	if err := editor(context.Background(), req); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	authHeader := req.Header.Get("Authorization")
+	if authHeader == "" {
+		t.Fatal("expected Authorization header to be set")
+	}
+	if !strings.HasPrefix(authHeader, "Sufy test-ak:") {
+		t.Errorf("expected Authorization to start with 'Sufy test-ak:', got %q", authHeader)
 	}
 }
 
@@ -1355,8 +1400,7 @@ func TestListTemplatesError(t *testing.T) {
 // --- Sandbox.GetSandboxesMetrics ---
 
 func TestGetSandboxesMetrics(t *testing.T) {
-	mockWithMetrics := &mockAPIWithSandboxesMetrics{
-		mockAPI: &mockAPI{},
+	mock := &mockAPI{
 		getSandboxesMetricsFn: func(ctx context.Context, params *apis.GetSandboxesMetricsParams, editors ...apis.RequestEditorFn) (*apis.GetSandboxesMetricsResponse, error) {
 			return &apis.GetSandboxesMetricsResponse{
 				JSON200:      &apis.SandboxesWithMetrics{Sandboxes: map[string]apis.SandboxMetric{"sb-1": {CPUCount: 4}}},
@@ -1364,7 +1408,7 @@ func TestGetSandboxesMetrics(t *testing.T) {
 			}, nil
 		},
 	}
-	c := newTestClient(mockWithMetrics)
+	c := newTestClient(mock)
 	metrics, err := c.GetSandboxesMetrics(context.Background(), &GetSandboxesMetricsParams{SandboxIds: []string{"sb-1"}})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -1374,17 +1418,284 @@ func TestGetSandboxesMetrics(t *testing.T) {
 	}
 }
 
-// mockAPIWithSandboxesMetrics wraps mockAPI and overrides GetSandboxesMetricsWithResponse.
-type mockAPIWithSandboxesMetrics struct {
-	*mockAPI
-	getSandboxesMetricsFn func(ctx context.Context, params *apis.GetSandboxesMetricsParams, editors ...apis.RequestEditorFn) (*apis.GetSandboxesMetricsResponse, error)
-}
-
-func (m *mockAPIWithSandboxesMetrics) GetSandboxesMetricsWithResponse(ctx context.Context, params *apis.GetSandboxesMetricsParams, editors ...apis.RequestEditorFn) (*apis.GetSandboxesMetricsResponse, error) {
-	return m.getSandboxesMetricsFn(ctx, params, editors...)
-}
-
 // --- Connect returns JSON201 (new sandbox) ---
+
+// boolPtr returns a pointer to the given bool value.
+func boolPtr(v bool) *bool { return &v }
+
+// --- Template: UpdateTemplate ---
+
+func TestUpdateTemplate(t *testing.T) {
+	mock := &mockAPI{
+		updateTemplateFn: func(ctx context.Context, templateID apis.TemplateID, body apis.UpdateTemplateJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.UpdateTemplateResponse, error) {
+			return &apis.UpdateTemplateResponse{HTTPResponse: httpResponse(200)}, nil
+		},
+	}
+	c := newTestClient(mock)
+	if err := c.UpdateTemplate(context.Background(), "tmpl-1", UpdateTemplateParams{Public: boolPtr(true)}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestUpdateTemplateError(t *testing.T) {
+	mock := &mockAPI{
+		updateTemplateFn: func(ctx context.Context, templateID apis.TemplateID, body apis.UpdateTemplateJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.UpdateTemplateResponse, error) {
+			return &apis.UpdateTemplateResponse{
+				HTTPResponse: httpResponse(400),
+				Body:         []byte(`{"message":"bad request"}`),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	err := c.UpdateTemplate(context.Background(), "tmpl-1", UpdateTemplateParams{Public: boolPtr(true)})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- Template: GetTemplateBuildLogs ---
+
+func TestGetTemplateBuildLogs(t *testing.T) {
+	mock := &mockAPI{
+		getTemplateBuildLogsFn: func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildLogsParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildLogsResponse, error) {
+			return &apis.GetTemplateBuildLogsResponse{
+				JSON200:      &apis.TemplateBuildLogsResponse{Logs: []apis.BuildLogEntry{{Message: "step 1", Level: apis.LogLevelInfo}}},
+				HTTPResponse: httpResponse(200),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	logs, err := c.GetTemplateBuildLogs(context.Background(), "tmpl-1", "build-1", nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(logs.Logs) != 1 {
+		t.Fatalf("expected 1 log entry, got %d", len(logs.Logs))
+	}
+	if logs.Logs[0].Message != "step 1" {
+		t.Errorf("expected message 'step 1', got %q", logs.Logs[0].Message)
+	}
+}
+
+func TestGetTemplateBuildLogsError(t *testing.T) {
+	mock := &mockAPI{
+		getTemplateBuildLogsFn: func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildLogsParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildLogsResponse, error) {
+			return &apis.GetTemplateBuildLogsResponse{
+				HTTPResponse: httpResponse(404),
+				Body:         []byte(`{"message":"not found"}`),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	_, err := c.GetTemplateBuildLogs(context.Background(), "tmpl-1", "build-1", nil)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- Template: StartTemplateBuild ---
+
+func TestStartTemplateBuild(t *testing.T) {
+	mock := &mockAPI{
+		startTemplateBuildV2Fn: func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, body apis.StartTemplateBuildV2JSONRequestBody, editors ...apis.RequestEditorFn) (*apis.StartTemplateBuildV2Response, error) {
+			return &apis.StartTemplateBuildV2Response{HTTPResponse: httpResponse(202)}, nil
+		},
+	}
+	c := newTestClient(mock)
+	if err := c.StartTemplateBuild(context.Background(), "tmpl-1", "build-1", StartTemplateBuildParams{}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestStartTemplateBuildError(t *testing.T) {
+	mock := &mockAPI{
+		startTemplateBuildV2Fn: func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, body apis.StartTemplateBuildV2JSONRequestBody, editors ...apis.RequestEditorFn) (*apis.StartTemplateBuildV2Response, error) {
+			return &apis.StartTemplateBuildV2Response{
+				HTTPResponse: httpResponse(500),
+				Body:         []byte("internal error"),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	err := c.StartTemplateBuild(context.Background(), "tmpl-1", "build-1", StartTemplateBuildParams{})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- Template: GetTemplateFiles ---
+
+func TestGetTemplateFiles(t *testing.T) {
+	mock := &mockAPI{
+		getTemplateFilesFn: func(ctx context.Context, templateID apis.TemplateID, hash string, editors ...apis.RequestEditorFn) (*apis.GetTemplateFilesResponse, error) {
+			return &apis.GetTemplateFilesResponse{
+				JSON201:      &apis.TemplateBuildFileUpload{Present: true},
+				HTTPResponse: httpResponse(201),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	upload, err := c.GetTemplateFiles(context.Background(), "tmpl-1", "abc123")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !upload.Present {
+		t.Error("expected Present to be true")
+	}
+}
+
+func TestGetTemplateFilesError(t *testing.T) {
+	mock := &mockAPI{
+		getTemplateFilesFn: func(ctx context.Context, templateID apis.TemplateID, hash string, editors ...apis.RequestEditorFn) (*apis.GetTemplateFilesResponse, error) {
+			return &apis.GetTemplateFilesResponse{
+				HTTPResponse: httpResponse(404),
+				Body:         []byte(`{"message":"not found"}`),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	_, err := c.GetTemplateFiles(context.Background(), "tmpl-1", "abc123")
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- Template: AssignTemplateTags ---
+
+func TestAssignTemplateTags(t *testing.T) {
+	buildUUID := openapi_types.UUID{0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0}
+	mock := &mockAPI{
+		assignTemplateTagsFn: func(ctx context.Context, body apis.AssignTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.AssignTemplateTagsResponse, error) {
+			return &apis.AssignTemplateTagsResponse{
+				JSON201:      &apis.AssignedTemplateTags{BuildID: buildUUID, Tags: []string{"latest"}},
+				HTTPResponse: httpResponse(201),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	result, err := c.AssignTemplateTags(context.Background(), ManageTagsParams{Tags: []string{"latest"}, Target: "my-tmpl:v1"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(result.Tags) != 1 || result.Tags[0] != "latest" {
+		t.Errorf("unexpected tags: %v", result.Tags)
+	}
+}
+
+func TestAssignTemplateTagsError(t *testing.T) {
+	mock := &mockAPI{
+		assignTemplateTagsFn: func(ctx context.Context, body apis.AssignTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.AssignTemplateTagsResponse, error) {
+			return &apis.AssignTemplateTagsResponse{
+				HTTPResponse: httpResponse(400),
+				Body:         []byte(`{"message":"bad request"}`),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	_, err := c.AssignTemplateTags(context.Background(), ManageTagsParams{Tags: []string{"latest"}, Target: "my-tmpl:v1"})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- Template: DeleteTemplateTags ---
+
+func TestDeleteTemplateTags(t *testing.T) {
+	mock := &mockAPI{
+		deleteTemplateTagsFn: func(ctx context.Context, body apis.DeleteTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.DeleteTemplateTagsResponse, error) {
+			return &apis.DeleteTemplateTagsResponse{HTTPResponse: httpResponse(204)}, nil
+		},
+	}
+	c := newTestClient(mock)
+	if err := c.DeleteTemplateTags(context.Background(), DeleteTagsParams{Name: "my-tmpl", Tags: []string{"old"}}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestDeleteTemplateTagsError(t *testing.T) {
+	mock := &mockAPI{
+		deleteTemplateTagsFn: func(ctx context.Context, body apis.DeleteTemplateTagsJSONRequestBody, editors ...apis.RequestEditorFn) (*apis.DeleteTemplateTagsResponse, error) {
+			return &apis.DeleteTemplateTagsResponse{
+				HTTPResponse: httpResponse(404),
+				Body:         []byte(`{"message":"not found"}`),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	err := c.DeleteTemplateTags(context.Background(), DeleteTagsParams{Name: "my-tmpl", Tags: []string{"old"}})
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+// --- Poll: WithBackoff ---
+
+func TestPollWithBackoff(t *testing.T) {
+	callCount := 0
+	mock := &mockAPI{
+		getTemplateBuildStatusFn: func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildStatusParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildStatusResponse, error) {
+			callCount++
+			status := apis.TemplateBuildStatusBuilding
+			if callCount >= 4 {
+				status = apis.TemplateBuildStatusReady
+			}
+			return &apis.GetTemplateBuildStatusResponse{
+				JSON200:      &apis.TemplateBuildInfo{TemplateID: templateID, BuildID: buildID, Status: status},
+				HTTPResponse: httpResponse(200),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	info, err := c.WaitForBuild(context.Background(), "tmpl-1", "build-1",
+		WithPollInterval(50*time.Millisecond),
+		WithBackoff(2.0, 500*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if info.Status != BuildStatusReady {
+		t.Errorf("expected status 'ready', got %q", info.Status)
+	}
+	if callCount < 4 {
+		t.Errorf("expected at least 4 calls, got %d", callCount)
+	}
+}
+
+// --- Poll: WithOnPoll ---
+
+func TestPollWithOnPoll(t *testing.T) {
+	callCount := 0
+	var attempts []int
+	mock := &mockAPI{
+		getTemplateBuildStatusFn: func(ctx context.Context, templateID apis.TemplateID, buildID apis.BuildID, params *apis.GetTemplateBuildStatusParams, editors ...apis.RequestEditorFn) (*apis.GetTemplateBuildStatusResponse, error) {
+			callCount++
+			status := apis.TemplateBuildStatusBuilding
+			if callCount >= 3 {
+				status = apis.TemplateBuildStatusReady
+			}
+			return &apis.GetTemplateBuildStatusResponse{
+				JSON200:      &apis.TemplateBuildInfo{TemplateID: templateID, BuildID: buildID, Status: status},
+				HTTPResponse: httpResponse(200),
+			}, nil
+		},
+	}
+	c := newTestClient(mock)
+	_, err := c.WaitForBuild(context.Background(), "tmpl-1", "build-1",
+		WithPollInterval(50*time.Millisecond),
+		WithOnPoll(func(attempt int) { attempts = append(attempts, attempt) }),
+	)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(attempts) != 3 {
+		t.Fatalf("expected 3 onPoll calls, got %d", len(attempts))
+	}
+	for i, a := range attempts {
+		if a != i+1 {
+			t.Errorf("expected attempt %d, got %d", i+1, a)
+		}
+	}
+}
 
 func TestConnectCreated(t *testing.T) {
 	mock := &mockAPI{

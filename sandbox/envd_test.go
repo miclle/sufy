@@ -24,8 +24,74 @@ import (
 	"io"
 	"mime"
 	"mime/multipart"
+	"strings"
 	"testing"
+
+	"connectrpc.com/connect"
 )
+
+func TestSandboxAlias(t *testing.T) {
+	alias := "my-alias"
+	sb := &Sandbox{alias: &alias}
+	if sb.Alias() != &alias {
+		t.Errorf("Alias() = %v, want %v", sb.Alias(), &alias)
+	}
+	if got := *sb.Alias(); got != "my-alias" {
+		t.Errorf("*Alias() = %q, want %q", got, "my-alias")
+	}
+
+	sb2 := &Sandbox{}
+	if sb2.Alias() != nil {
+		t.Errorf("Alias() = %v, want nil", sb2.Alias())
+	}
+}
+
+func TestSandboxDomain(t *testing.T) {
+	domain := "example.com"
+	sb := &Sandbox{domain: &domain}
+	if sb.Domain() != &domain {
+		t.Errorf("Domain() = %v, want %v", sb.Domain(), &domain)
+	}
+	if got := *sb.Domain(); got != "example.com" {
+		t.Errorf("*Domain() = %q, want %q", got, "example.com")
+	}
+
+	sb2 := &Sandbox{}
+	if sb2.Domain() != nil {
+		t.Errorf("Domain() = %v, want nil", sb2.Domain())
+	}
+}
+
+func TestKeepaliveWrapStreamingHandler(t *testing.T) {
+	ki := keepaliveInterceptor{}
+	called := false
+	handler := connect.StreamingHandlerFunc(func(_ context.Context, _ connect.StreamingHandlerConn) error {
+		called = true
+		return nil
+	})
+	wrapped := ki.WrapStreamingHandler(handler)
+	if err := wrapped(context.Background(), nil); err != nil {
+		t.Fatalf("WrapStreamingHandler returned error: %v", err)
+	}
+	if !called {
+		t.Error("expected handler to be called")
+	}
+}
+
+func TestFileURLOptionWithExpiration(t *testing.T) {
+	domain := "test.dev"
+	token := "tok"
+	sb := &Sandbox{sandboxID: "sb-1", domain: &domain, envdAccessToken: &token, client: &Client{config: &Config{}}}
+
+	u := sb.DownloadURL("/file.txt", WithSignatureExpiration(60))
+	if u == "" {
+		t.Fatal("DownloadURL returned empty string")
+	}
+	// The URL should contain signature_expiration=60.
+	if !strings.Contains(u, "signature_expiration=60") {
+		t.Errorf("DownloadURL = %q, want to contain signature_expiration=60", u)
+	}
+}
 
 func TestGetHost(t *testing.T) {
 	domain := "example.com"
