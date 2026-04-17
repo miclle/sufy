@@ -17,6 +17,7 @@
 package sufy
 
 import (
+	"github.com/sufy-dev/sufy/auth"
 	"github.com/sufy-dev/sufy/baseconf"
 	"github.com/sufy-dev/sufy/sandbox"
 )
@@ -25,14 +26,27 @@ import (
 
 // Config is the configuration for the SUFY client.
 type Config struct {
-	APIKey  string // API key for authentication
-	BaseURL string // Base URL for the SUFY API
+	// APIKey is the API key for authentication.
+	APIKey string
+
+	// AccessKey is the public key identifier for AK/SK authentication.
+	// Must be used together with SecretKey. When both AK/SK and APIKey are
+	// configured, AK/SK takes priority.
+	AccessKey string
+
+	// SecretKey is the secret key for AK/SK authentication.
+	// Must be used together with AccessKey.
+	SecretKey string
+
+	// BaseURL is the base URL for the SUFY API.
+	BaseURL string
 }
 
 // Client is the client for SUFY.
 type Client struct {
-	apiKey  string
-	baseURL string
+	apiKey      string
+	credentials *auth.Credentials
+	baseURL     string
 }
 
 // New creates a new SUFY client.
@@ -41,9 +55,17 @@ func New(__xgo_optional_conf *Config) *Client {
 	if conf == nil {
 		conf = &Config{}
 	}
+
+	var cred *auth.Credentials
+	ak, sk := baseconf.RequireCredentials(conf.AccessKey, conf.SecretKey)
+	if ak != "" && sk != "" {
+		cred = auth.New(ak, sk)
+	}
+
 	return &Client{
-		apiKey:  baseconf.RequireAPIKey(conf.APIKey),
-		baseURL: baseconf.RequireBaseURL(conf.BaseURL),
+		apiKey:      baseconf.RequireAPIKey(conf.APIKey),
+		credentials: cred,
+		baseURL:     baseconf.RequireBaseURL(conf.BaseURL),
 	}
 }
 
@@ -52,8 +74,9 @@ func New(__xgo_optional_conf *Config) *Client {
 // Sandbox returns the sandbox client.
 func (c *Client) Sandbox() *sandbox.Client {
 	return sandbox.New(&sandbox.Config{
-		APIKey:  c.apiKey,
-		BaseURL: c.baseURL,
+		APIKey:      c.apiKey,
+		Credentials: c.credentials,
+		BaseURL:     c.baseURL,
 	})
 }
 
