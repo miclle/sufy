@@ -79,6 +79,11 @@ type CreateParams struct {
 
 	// Network configures outbound networking rules. Optional.
 	Network *NetworkConfig
+
+	// Injections is an optional list of injection rules applied to outgoing
+	// HTTPS requests from the sandbox. Each entry is a discriminated union —
+	// either a reference to a saved rule (ByID) or an inline injection spec.
+	Injections *[]SandboxInjectionSpec
 }
 
 // ConnectParams holds parameters for connecting to an existing sandbox.
@@ -355,7 +360,7 @@ func sandboxesWithMetricsFromAPI(a *apis.SandboxesWithMetrics) *SandboxesWithMet
 // Conversion helpers — SDK → apis
 // ---------------------------------------------------------------------------
 
-func (p *CreateParams) toAPI() apis.CreateSandboxJSONRequestBody {
+func (p *CreateParams) toAPI() (apis.CreateSandboxJSONRequestBody, error) {
 	body := apis.CreateSandboxJSONRequestBody{
 		TemplateID:          p.TemplateID,
 		Timeout:             p.Timeout,
@@ -379,7 +384,18 @@ func (p *CreateParams) toAPI() apis.CreateSandboxJSONRequestBody {
 			MaskRequestHost:    p.Network.MaskRequestHost,
 		}
 	}
-	return body
+	if p.Injections != nil {
+		injections := make([]apis.SandboxInjection, len(*p.Injections))
+		for i, spec := range *p.Injections {
+			inj, err := sandboxInjectionSpecToAPI(spec)
+			if err != nil {
+				return body, err
+			}
+			injections[i] = inj
+		}
+		body.Injections = &injections
+	}
+	return body, nil
 }
 
 func (p *ConnectParams) toAPI() apis.ConnectSandboxJSONRequestBody {

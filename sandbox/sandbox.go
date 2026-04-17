@@ -124,7 +124,11 @@ func (s *Sandbox) processClient() processconnect.ProcessClient {
 
 // Create spawns a new sandbox from the given template.
 func (c *Client) Create(ctx context.Context, params CreateParams) (*Sandbox, error) {
-	resp, err := c.api.CreateSandboxWithResponse(ctx, params.toAPI())
+	body, err := params.toAPI()
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.api.CreateSandboxWithResponse(ctx, body)
 	if err != nil {
 		return nil, err
 	}
