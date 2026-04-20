@@ -1,10 +1,76 @@
-var (
-    Runtime string `flag:"runtime, usage: Choose a sandbox runtime."`
+import (
+	"github.com/goplus/cobra"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
 )
 
-use "create [flags]"
+var (
+	Metadata  string `flag:"metadata, short: m, usage: metadata key=value pairs (comma-separated)"`
+	AutoPause bool   `flag:"auto-pause, usage: automatically pause sandbox when timeout expires (instead of killing)"`
+	Detach    bool   `flag:"detach, usage: create sandbox without connecting terminal (sandbox stays alive until timeout)"`
+)
 
-short "Create a sandbox in the specified account and project."
+use "create [template]"
 
-run => {
+short "Create a sandbox and connect to its terminal (alias: cr)"
+
+this.Command.Aliases = []string{"cr"}
+this.Command.Args = cobra.MaximumNArgs(1)
+
+this.Command.Example = `  # Create a sandbox from a template
+  sufy sandbox create my-template
+  sufy sbx cr my-template
+
+  # Create with a timeout (seconds)
+  sufy sandbox create my-template --timeout 300
+  sufy sbx cr my-template -t 300
+
+  # Create in detached mode (no terminal, sandbox stays alive)
+  sufy sandbox create my-template -t 300 --detach
+  sufy sbx cr my-template -t 300 --detach
+
+  # Create with environment variables
+  sufy sandbox create my-template -e FOO=bar -e BAZ=qux
+  sufy sbx cr my-template -e FOO=bar -e BAZ=qux
+
+  # Create with auto-pause (pause instead of kill on timeout)
+  sufy sandbox create my-template -t 300 --auto-pause
+  sufy sbx cr my-template -t 300 --auto-pause
+
+  # Create with metadata
+  sufy sandbox create my-template -m env=dev,team=backend
+  sufy sbx cr my-template -m env=dev,team=backend
+
+  # Create with injection rules
+  sufy sandbox create my-template --injection-rule rule-openai --injection-rule rule-http
+  sufy sbx cr my-template --injection-rule rule-openai --injection-rule rule-http
+
+  # Create with inline injections
+  sufy sandbox create my-template --inline-injection 'type=openai,api-key=sk-xxx' --inline-injection 'type=http,base-url=https://api.example.com,headers=Authorization=Bearer token;X-Env=prod'
+  sufy sbx cr my-template --inline-injection 'type=openai,api-key=sk-xxx'`
+
+var timeout int32
+this.Command.Flags().Int32VarP(&timeout, "timeout", "t", 0, "sandbox timeout in seconds")
+
+var envVars []string
+var injectionRuleIDs []string
+var inlineInjections []string
+this.Command.Flags().StringArrayVarP(&envVars, "env-var", "e", nil, "environment variables (KEY=VALUE, can be specified multiple times)")
+this.Command.Flags().StringArrayVar(&injectionRuleIDs, "injection-rule", nil, "injection rule IDs to apply when creating the sandbox (can be specified multiple times)")
+this.Command.Flags().StringArrayVar(&inlineInjections, "inline-injection", nil, "inline injection spec to apply when creating the sandbox (can be specified multiple times, format: type=<type>,api-key=<key>,base-url=<url>,headers=<k1=v1;k2=v2>)")
+
+run args => {
+	templateID := ""
+	if len(args) > 0 {
+		templateID = args[0]
+	}
+	cli.Create(cli.CreateInfo{
+		TemplateID:       templateID,
+		Timeout:          timeout,
+		Metadata:         Metadata,
+		Detach:           Detach,
+		EnvVars:          envVars,
+		AutoPause:        AutoPause,
+		InjectionRuleIDs: injectionRuleIDs,
+		InlineInjections: inlineInjections,
+	})
 }

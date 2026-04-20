@@ -1,29 +1,43 @@
 import (
-    "github.com/sufy-dev/sufy/sandbox"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
 )
 
 var (
-	Limit int    `flag:"limit, usage: Limit the number of sandboxes returned. Default is 20, maximum is 100."`
-	From  string `flag:"from, usage: Pagination token for fetching the next page."`
+	State    string `flag:"state, short: s, usage: filter by state (comma-separated: running,paused). Defaults to running"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata (key1=value1,key2=value2)"`
+	Format   string `flag:"format, short: f, val: pretty, usage: output format: pretty or json"`
 )
 
-use "list [flags]"
+use "list"
 
-short "List all sandboxes for the specified account and project."
+short "List sandboxes (alias: ls)"
+
+this.Command.Aliases = []string{"ls"}
+
+this.Command.Example = `  # List running sandboxes
+  sufy sandbox list
+  sufy sbx ls
+
+  # Filter by state and limit
+  sufy sandbox list --state running,paused --limit 10
+  sufy sbx ls -s running,paused -l 10
+
+  # Filter by metadata
+  sufy sandbox list -m env=prod,team=backend
+  sufy sbx ls -m env=prod,team=backend
+
+  # Output as JSON
+  sufy sandbox list -f json
+  sufy sbx ls -f json`
+
+var limit int32
+this.Command.Flags().Int32VarP(&limit, "limit", "l", 0, "maximum number of sandboxes to return")
 
 run => {
-    var limit *int32
-    if Limit > 0 {
-        v := int32(Limit)
-        limit = &v
-    }
-    var nextToken *string
-    if From != "" {
-        nextToken = &From
-    }
-    sandboxes := sandbox.list(context, limit = limit, nextToken = nextToken)!
-    echo "sandboxes:"
-    for sbx in sandboxes {
-        echo " ", sbx.SandboxID
-    }
+	cli.List(cli.ListInfo{
+		State:    State,
+		Metadata: Metadata,
+		Limit:    limit,
+		Format:   Format,
+	})
 }

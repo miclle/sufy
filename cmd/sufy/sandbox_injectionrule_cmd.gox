@@ -1,0 +1,31 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/ops"
+)
+
+use "injection-rule"
+
+short "Manage sandbox injection rules (alias: ir)"
+
+this.Command.Aliases = []string{"ir"}
+
+this.Command.Example = `  # View injection-rule subcommands
+  sufy sandbox injection-rule -h
+  sufy sbx ir -h
+
+  # List all injection rules
+  sufy sandbox injection-rule list
+  sufy sbx ir ls
+
+  # Create an OpenAI injection rule
+  sufy sandbox injection-rule create --name openai-default --type openai --api-key sk-xxx
+  sufy sbx ir cr --name openai-default --type openai --api-key sk-xxx
+
+  # Get injection rule details
+  sufy sandbox injection-rule get rule-xxxxxxxxxxxx
+  sufy sbx ir gt rule-xxxxxxxxxxxx`
+
+ops.RegisterInjectionRuleChildren(&this.Command.Command)
+
+run => {
+	help
+}

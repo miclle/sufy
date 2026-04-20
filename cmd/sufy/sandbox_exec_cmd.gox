@@ -1,0 +1,49 @@
+import (
+	"github.com/goplus/cobra"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Background bool   `flag:"background, short: b, usage: run command in background (print PID and return)"`
+	Cwd        string `flag:"cwd, short: c, usage: working directory for the command"`
+	User       string `flag:"user, short: u, usage: user to run the command as"`
+)
+
+use "exec <sandboxID> -- <command...>"
+
+short "Execute a command in a sandbox (alias: ex)"
+
+this.Command.Aliases = []string{"ex"}
+this.Command.Args = cobra.MinimumNArgs(1)
+
+this.Command.Example = `  # Run a command in a sandbox
+  sufy sandbox exec sb-xxxxxxxxxxxx -- ls -la
+  sufy sbx ex sb-xxxxxxxxxxxx -- ls -la
+
+  # Pipe stdin to a command
+  echo "hello world" | sufy sbx ex sb-xxxxxxxxxxxx -- cat
+  cat file.txt | sufy sbx ex sb-xxxxxxxxxxxx -- wc -l
+
+  # Run in background (print PID and return)
+  sufy sandbox exec sb-xxxxxxxxxxxx -b -- python server.py
+  sufy sbx ex sb-xxxxxxxxxxxx -b -- python server.py
+
+  # Specify working directory and user
+  sufy sandbox exec sb-xxxxxxxxxxxx -c /app -u root -- npm install
+
+  # Set environment variables
+  sufy sandbox exec sb-xxxxxxxxxxxx -e PORT=3000 -e NODE_ENV=production -- node app.js`
+
+var envVars []string
+this.Command.Flags().StringArrayVarP(&envVars, "env", "e", nil, "environment variables (KEY=VALUE, can be specified multiple times)")
+
+run args => {
+	cli.Exec(cli.ExecInfo{
+		SandboxID:  args[0],
+		Command:    args[1:],
+		Background: Background,
+		Cwd:        Cwd,
+		User:       User,
+		EnvVars:    envVars,
+	})
+}

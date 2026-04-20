@@ -1,0 +1,38 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Format string `flag:"format, val: pretty, usage: output format: pretty or json"`
+	Follow bool   `flag:"follow, short: f, usage: keep streaming metrics until the sandbox is closed"`
+)
+
+use "metrics <sandboxID>"
+
+short "View sandbox resource metrics (alias: mt)"
+
+this.Command.Aliases = []string{"mt"}
+
+this.Command.Example = `  # View current metrics
+  sufy sandbox metrics sb-xxxxxxxxxxxx
+  sufy sbx mt sb-xxxxxxxxxxxx
+
+  # Stream metrics in follow mode
+  sufy sandbox metrics sb-xxxxxxxxxxxx -f
+  sufy sbx mt sb-xxxxxxxxxxxx -f
+
+  # Output as JSON
+  sufy sandbox metrics sb-xxxxxxxxxxxx --format json
+  sufy sbx mt sb-xxxxxxxxxxxx --format json`
+
+run args => {
+	if len(args) == 0 {
+		cli.Metrics(cli.MetricsInfo{})
+		return
+	}
+	cli.Metrics(cli.MetricsInfo{
+		SandboxID: args[0],
+		Format:    Format,
+		Follow:    Follow,
+	})
+}

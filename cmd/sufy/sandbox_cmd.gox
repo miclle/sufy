@@ -1,6 +1,24 @@
 use "sandbox"
 
-short "Sandbox manage sandboxes, execute commands, copy files, and more from your terminal."
+short "Manage sandboxes (alias: sbx)"
+
+this.Command.Aliases = []string{"sbx"}
+
+this.Command.Example = `  # View sandbox subcommands
+  sufy sandbox -h
+  sufy sbx -h
+
+  # Create a sandbox from a template
+  sufy sandbox create my-template
+  sufy sbx cr my-template
+
+  # List running sandboxes
+  sufy sandbox list
+  sufy sbx ls
+
+  # Connect to a sandbox
+  sufy sandbox connect sb-xxxxxxxxxxxx
+  sufy sbx cn sb-xxxxxxxxxxxx`
 
 run => {
 	help

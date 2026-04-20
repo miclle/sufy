@@ -1,0 +1,38 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	All      bool   `flag:"all, short: a, usage: resume all paused sandboxes"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
+)
+
+use "resume [sandboxIDs...]"
+
+short "Resume one or more paused sandboxes (alias: rs)"
+
+this.Command.Aliases = []string{"rs"}
+
+this.Command.Example = `  # Resume a paused sandbox
+  sufy sandbox resume sb-xxxxxxxxxxxx
+  sufy sbx rs sb-xxxxxxxxxxxx
+
+  # Resume multiple sandboxes
+  sufy sandbox resume sb-aaa sb-bbb sb-ccc
+  sufy sbx rs sb-aaa sb-bbb sb-ccc
+
+  # Resume all paused sandboxes
+  sufy sandbox resume --all
+  sufy sbx rs -a
+
+  # Resume all with specific metadata
+  sufy sandbox resume --all -m env=staging
+  sufy sbx rs -a -m env=staging`
+
+run args => {
+	cli.ResumeBatch(cli.ResumeInfo{
+		SandboxIDs: args,
+		All:        All,
+		Metadata:   Metadata,
+	})
+}

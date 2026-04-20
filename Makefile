@@ -1,4 +1,28 @@
-.PHONY: test unittest integrationtest staticcheck generate generate-sandbox sandbox-examples
+.PHONY: test unittest integrationtest staticcheck generate generate-sandbox sandbox-examples build install clean xgo-gen
+
+# --- CLI ---------------------------------------------------------------------
+
+# Output binary for `make build`. Override with `make build OUT=/usr/local/bin/sufy`.
+OUT ?= ./sufy
+
+# Regenerate xgo_autogen.go from cmd/sufy/*.gox. Required after editing any .gox file.
+xgo-gen:
+	xgo build ./cmd/sufy/
+
+# Build the sufy CLI binary. Runs xgo codegen first so .gox edits are picked up.
+build: xgo-gen
+	go build -o $(OUT) ./cmd/sufy/
+
+# Install the sufy CLI into $GOPATH/bin (or $GOBIN).
+install: xgo-gen
+	go install ./cmd/sufy/
+
+# Remove the local ./sufy binary produced by `make build`.
+clean:
+	rm -f ./sufy
+
+# --- Tests / codegen / examples ---------------------------------------------
+
 
 test:
 	go test -tags=unit -failfast -count=1 -v -timeout 30m -coverprofile=coverage.txt \

@@ -3,10 +3,10 @@
 package main
 
 import (
-	"fmt"
+	"github.com/goplus/cobra"
 	"github.com/goplus/cobra/xcmd"
-	"github.com/qiniu/x/errors"
-	"github.com/sufy-dev/sufy/sandbox"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/ops"
 )
 
 const _ = true
@@ -18,16 +18,72 @@ type Cmd_sandbox struct {
 	xcmd.Command
 	*App
 }
+type Cmd_sandbox_connect struct {
+	xcmd.Command
+	*App
+}
 type Cmd_sandbox_create struct {
 	xcmd.Command
 	*App
-	Runtime string `flag:"runtime, usage: Choose a sandbox runtime."`
+	Metadata  string `flag:"metadata, short: m, usage: metadata key=value pairs (comma-separated)"`
+	AutoPause bool   `flag:"auto-pause, usage: automatically pause sandbox when timeout expires (instead of killing)"`
+	Detach    bool   `flag:"detach, usage: create sandbox without connecting terminal (sandbox stays alive until timeout)"`
+}
+type Cmd_sandbox_exec struct {
+	xcmd.Command
+	*App
+	Background bool   `flag:"background, short: b, usage: run command in background (print PID and return)"`
+	Cwd        string `flag:"cwd, short: c, usage: working directory for the command"`
+	User       string `flag:"user, short: u, usage: user to run the command as"`
+}
+type Cmd_sandbox_injectionrule struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_kill struct {
+	xcmd.Command
+	*App
+	All      bool   `flag:"all, short: a, usage: kill all sandboxes"`
+	State    string `flag:"state, short: s, usage: filter by state when using --all (comma-separated: running,paused). Defaults to running"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
 }
 type Cmd_sandbox_list struct {
 	xcmd.Command
 	*App
-	Limit int    `flag:"limit, usage: Limit the number of sandboxes returned. Default is 20, maximum is 100."`
-	From  string `flag:"from, usage: Pagination token for fetching the next page."`
+	State    string `flag:"state, short: s, usage: filter by state (comma-separated: running,paused). Defaults to running"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata (key1=value1,key2=value2)"`
+	Format   string `flag:"format, short: f, val: pretty, usage: output format: pretty or json"`
+}
+type Cmd_sandbox_logs struct {
+	xcmd.Command
+	*App
+	Level   string `flag:"level, val: INFO, usage: filter by log level (DEBUG, INFO, WARN, ERROR). Higher levels are also shown"`
+	Format  string `flag:"format, val: pretty, usage: output format: pretty or json"`
+	Follow  bool   `flag:"follow, short: f, usage: keep streaming logs until the sandbox is closed"`
+	Loggers string `flag:"loggers, usage: filter logs by loggers (comma-separated prefixes)"`
+}
+type Cmd_sandbox_metrics struct {
+	xcmd.Command
+	*App
+	Format string `flag:"format, val: pretty, usage: output format: pretty or json"`
+	Follow bool   `flag:"follow, short: f, usage: keep streaming metrics until the sandbox is closed"`
+}
+type Cmd_sandbox_pause struct {
+	xcmd.Command
+	*App
+	All      bool   `flag:"all, short: a, usage: pause all sandboxes"`
+	State    string `flag:"state, short: s, usage: filter by state when using --all (comma-separated: running,paused). Defaults to running"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
+}
+type Cmd_sandbox_resume struct {
+	xcmd.Command
+	*App
+	All      bool   `flag:"all, short: a, usage: resume all paused sandboxes"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
+}
+type Cmd_sandbox_template struct {
+	xcmd.Command
+	*App
 }
 //line cmd/sufy/main_app.gox:1
 func (this *App) MainEntry() {
@@ -38,9 +94,18 @@ func (this *App) MainEntry() {
 }
 func (this *App) Main() {
 	_xgo_obj0 := &Cmd_sandbox{App: this}
-	_xgo_obj1 := &Cmd_sandbox_create{App: this}
-	_xgo_obj2 := &Cmd_sandbox_list{App: this}
-	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2)
+	_xgo_obj1 := &Cmd_sandbox_connect{App: this}
+	_xgo_obj2 := &Cmd_sandbox_create{App: this}
+	_xgo_obj3 := &Cmd_sandbox_exec{App: this}
+	_xgo_obj4 := &Cmd_sandbox_injectionrule{App: this}
+	_xgo_obj5 := &Cmd_sandbox_kill{App: this}
+	_xgo_obj6 := &Cmd_sandbox_list{App: this}
+	_xgo_obj7 := &Cmd_sandbox_logs{App: this}
+	_xgo_obj8 := &Cmd_sandbox_metrics{App: this}
+	_xgo_obj9 := &Cmd_sandbox_pause{App: this}
+	_xgo_obj10 := &Cmd_sandbox_resume{App: this}
+	_xgo_obj11 := &Cmd_sandbox_template{App: this}
+	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2, _xgo_obj3, _xgo_obj4, _xgo_obj5, _xgo_obj6, _xgo_obj7, _xgo_obj8, _xgo_obj9, _xgo_obj10, _xgo_obj11)
 }
 //line cmd/sufy/sandbox_cmd.gox:1
 func (this *Cmd_sandbox) Main(_xgo_arg0 string) {
@@ -48,83 +113,477 @@ func (this *Cmd_sandbox) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_cmd.gox:1:1
 	this.Use("sandbox")
 //line cmd/sufy/sandbox_cmd.gox:3:1
-	this.Short("Sandbox manage sandboxes, execute commands, copy files, and more from your terminal.")
+	this.Short("Manage sandboxes (alias: sbx)")
 //line cmd/sufy/sandbox_cmd.gox:5:1
+	this.Command.Aliases = []string{"sbx"}
+//line cmd/sufy/sandbox_cmd.gox:7:1
+	this.Command.Example = `  # View sandbox subcommands
+  sufy sandbox -h
+  sufy sbx -h
+
+  # Create a sandbox from a template
+  sufy sandbox create my-template
+  sufy sbx cr my-template
+
+  # List running sandboxes
+  sufy sandbox list
+  sufy sbx ls
+
+  # Connect to a sandbox
+  sufy sandbox connect sb-xxxxxxxxxxxx
+  sufy sbx cn sb-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_cmd.gox:23:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_cmd.gox:6:1
+//line cmd/sufy/sandbox_cmd.gox:24:1
 		this.Help()
 	})
 }
 func (this *Cmd_sandbox) Classfname() string {
 	return "sandbox"
 }
-//line cmd/sufy/sandbox_create_cmd.gox:5
+//line cmd/sufy/sandbox_connect_cmd.gox:5
+func (this *Cmd_sandbox_connect) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_connect_cmd.gox:5:1
+	this.Use("connect <sandboxID>")
+//line cmd/sufy/sandbox_connect_cmd.gox:7:1
+	this.Short("Connect to an existing sandbox terminal (alias: cn)")
+//line cmd/sufy/sandbox_connect_cmd.gox:9:1
+	this.Command.Aliases = []string{"cn"}
+//line cmd/sufy/sandbox_connect_cmd.gox:11:1
+	this.Command.Example = `  # Connect to a sandbox by ID
+  sufy sandbox connect sb-xxxxxxxxxxxx
+  sufy sbx cn sb-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_connect_cmd.gox:15:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_connect_cmd.gox:16:1
+		if len(args) == 0 {
+//line cmd/sufy/sandbox_connect_cmd.gox:17:1
+			cli.Connect("")
+//line cmd/sufy/sandbox_connect_cmd.gox:18:1
+			return
+		}
+//line cmd/sufy/sandbox_connect_cmd.gox:20:1
+		cli.Connect(args[0])
+	})
+}
+func (this *Cmd_sandbox_connect) Classfname() string {
+	return "sandbox_connect"
+}
+//line cmd/sufy/sandbox_create_cmd.gox:12
 func (this *Cmd_sandbox_create) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_create_cmd.gox:5:1
-	this.Use("create [flags]")
-//line cmd/sufy/sandbox_create_cmd.gox:7:1
-	this.Short("Create a sandbox in the specified account and project.")
-//line cmd/sufy/sandbox_create_cmd.gox:9:1
-	this.Run__0(func() {
+//line cmd/sufy/sandbox_create_cmd.gox:12:1
+	this.Use("create [template]")
+//line cmd/sufy/sandbox_create_cmd.gox:14:1
+	this.Short("Create a sandbox and connect to its terminal (alias: cr)")
+//line cmd/sufy/sandbox_create_cmd.gox:16:1
+	this.Command.Aliases = []string{"cr"}
+//line cmd/sufy/sandbox_create_cmd.gox:17:1
+	this.Command.Args = cobra.MaximumNArgs(1)
+//line cmd/sufy/sandbox_create_cmd.gox:19:1
+	this.Command.Example = `  # Create a sandbox from a template
+  sufy sandbox create my-template
+  sufy sbx cr my-template
+
+  # Create with a timeout (seconds)
+  sufy sandbox create my-template --timeout 300
+  sufy sbx cr my-template -t 300
+
+  # Create in detached mode (no terminal, sandbox stays alive)
+  sufy sandbox create my-template -t 300 --detach
+  sufy sbx cr my-template -t 300 --detach
+
+  # Create with environment variables
+  sufy sandbox create my-template -e FOO=bar -e BAZ=qux
+  sufy sbx cr my-template -e FOO=bar -e BAZ=qux
+
+  # Create with auto-pause (pause instead of kill on timeout)
+  sufy sandbox create my-template -t 300 --auto-pause
+  sufy sbx cr my-template -t 300 --auto-pause
+
+  # Create with metadata
+  sufy sandbox create my-template -m env=dev,team=backend
+  sufy sbx cr my-template -m env=dev,team=backend
+
+  # Create with injection rules
+  sufy sandbox create my-template --injection-rule rule-openai --injection-rule rule-http
+  sufy sbx cr my-template --injection-rule rule-openai --injection-rule rule-http
+
+  # Create with inline injections
+  sufy sandbox create my-template --inline-injection 'type=openai,api-key=sk-xxx' --inline-injection 'type=http,base-url=https://api.example.com,headers=Authorization=Bearer token;X-Env=prod'
+  sufy sbx cr my-template --inline-injection 'type=openai,api-key=sk-xxx'`
+//line cmd/sufy/sandbox_create_cmd.gox:51:1
+	var timeout int32
+//line cmd/sufy/sandbox_create_cmd.gox:52:1
+	this.Command.Flags().Int32VarP(&timeout, "timeout", "t", 0, "sandbox timeout in seconds")
+//line cmd/sufy/sandbox_create_cmd.gox:54:1
+	var envVars []string
+//line cmd/sufy/sandbox_create_cmd.gox:55:1
+	var injectionRuleIDs []string
+//line cmd/sufy/sandbox_create_cmd.gox:56:1
+	var inlineInjections []string
+//line cmd/sufy/sandbox_create_cmd.gox:57:1
+	this.Command.Flags().StringArrayVarP(&envVars, "env-var", "e", nil, "environment variables (KEY=VALUE, can be specified multiple times)")
+//line cmd/sufy/sandbox_create_cmd.gox:58:1
+	this.Command.Flags().StringArrayVar(&injectionRuleIDs, "injection-rule", nil, "injection rule IDs to apply when creating the sandbox (can be specified multiple times)")
+//line cmd/sufy/sandbox_create_cmd.gox:59:1
+	this.Command.Flags().StringArrayVar(&inlineInjections, "inline-injection", nil, "inline injection spec to apply when creating the sandbox (can be specified multiple times, format: type=<type>,api-key=<key>,base-url=<url>,headers=<k1=v1;k2=v2>)")
+//line cmd/sufy/sandbox_create_cmd.gox:61:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_create_cmd.gox:62:1
+		templateID := ""
+//line cmd/sufy/sandbox_create_cmd.gox:63:1
+		if len(args) > 0 {
+//line cmd/sufy/sandbox_create_cmd.gox:64:1
+			templateID = args[0]
+		}
+//line cmd/sufy/sandbox_create_cmd.gox:66:1
+		cli.Create(cli.CreateInfo{TemplateID: templateID, Timeout: timeout, Metadata: this.Metadata, Detach: this.Detach, EnvVars: envVars, AutoPause: this.AutoPause, InjectionRuleIDs: injectionRuleIDs, InlineInjections: inlineInjections})
 	})
 }
 func (this *Cmd_sandbox_create) Classfname() string {
 	return "sandbox_create"
 }
-//line cmd/sufy/sandbox_list_cmd.gox:10
+//line cmd/sufy/sandbox_exec_cmd.gox:12
+func (this *Cmd_sandbox_exec) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_exec_cmd.gox:12:1
+	this.Use("exec <sandboxID> -- <command...>")
+//line cmd/sufy/sandbox_exec_cmd.gox:14:1
+	this.Short("Execute a command in a sandbox (alias: ex)")
+//line cmd/sufy/sandbox_exec_cmd.gox:16:1
+	this.Command.Aliases = []string{"ex"}
+//line cmd/sufy/sandbox_exec_cmd.gox:17:1
+	this.Command.Args = cobra.MinimumNArgs(1)
+//line cmd/sufy/sandbox_exec_cmd.gox:19:1
+	this.Command.Example = `  # Run a command in a sandbox
+  sufy sandbox exec sb-xxxxxxxxxxxx -- ls -la
+  sufy sbx ex sb-xxxxxxxxxxxx -- ls -la
+
+  # Pipe stdin to a command
+  echo "hello world" | sufy sbx ex sb-xxxxxxxxxxxx -- cat
+  cat file.txt | sufy sbx ex sb-xxxxxxxxxxxx -- wc -l
+
+  # Run in background (print PID and return)
+  sufy sandbox exec sb-xxxxxxxxxxxx -b -- python server.py
+  sufy sbx ex sb-xxxxxxxxxxxx -b -- python server.py
+
+  # Specify working directory and user
+  sufy sandbox exec sb-xxxxxxxxxxxx -c /app -u root -- npm install
+
+  # Set environment variables
+  sufy sandbox exec sb-xxxxxxxxxxxx -e PORT=3000 -e NODE_ENV=production -- node app.js`
+//line cmd/sufy/sandbox_exec_cmd.gox:37:1
+	var envVars []string
+//line cmd/sufy/sandbox_exec_cmd.gox:38:1
+	this.Command.Flags().StringArrayVarP(&envVars, "env", "e", nil, "environment variables (KEY=VALUE, can be specified multiple times)")
+//line cmd/sufy/sandbox_exec_cmd.gox:40:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_exec_cmd.gox:41:1
+		cli.Exec(cli.ExecInfo{SandboxID: args[0], Command: args[1:], Background: this.Background, Cwd: this.Cwd, User: this.User, EnvVars: envVars})
+	})
+}
+func (this *Cmd_sandbox_exec) Classfname() string {
+	return "sandbox_exec"
+}
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:5
+func (this *Cmd_sandbox_injectionrule) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:5:1
+	this.Use("injection-rule")
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:7:1
+	this.Short("Manage sandbox injection rules (alias: ir)")
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:9:1
+	this.Command.Aliases = []string{"ir"}
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:11:1
+	this.Command.Example = `  # View injection-rule subcommands
+  sufy sandbox injection-rule -h
+  sufy sbx ir -h
+
+  # List all injection rules
+  sufy sandbox injection-rule list
+  sufy sbx ir ls
+
+  # Create an OpenAI injection rule
+  sufy sandbox injection-rule create --name openai-default --type openai --api-key sk-xxx
+  sufy sbx ir cr --name openai-default --type openai --api-key sk-xxx
+
+  # Get injection rule details
+  sufy sandbox injection-rule get rule-xxxxxxxxxxxx
+  sufy sbx ir gt rule-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:27:1
+	ops.RegisterInjectionRuleChildren(&this.Command.Command)
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:29:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:30:1
+		this.Help()
+	})
+}
+func (this *Cmd_sandbox_injectionrule) Classfname() string {
+	return "sandbox_injectionrule"
+}
+//line cmd/sufy/sandbox_kill_cmd.gox:11
+func (this *Cmd_sandbox_kill) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_kill_cmd.gox:11:1
+	this.Use("kill [sandboxIDs...]")
+//line cmd/sufy/sandbox_kill_cmd.gox:13:1
+	this.Short("Kill one or more sandboxes (alias: kl)")
+//line cmd/sufy/sandbox_kill_cmd.gox:15:1
+	this.Command.Aliases = []string{"kl"}
+//line cmd/sufy/sandbox_kill_cmd.gox:17:1
+	this.Command.Example = `  # Kill a single sandbox
+  sufy sandbox kill sb-xxxxxxxxxxxx
+  sufy sbx kl sb-xxxxxxxxxxxx
+
+  # Kill multiple sandboxes
+  sufy sandbox kill sb-aaa sb-bbb sb-ccc
+  sufy sbx kl sb-aaa sb-bbb sb-ccc
+
+  # Kill all running sandboxes
+  sufy sandbox kill --all
+  sufy sbx kl -a
+
+  # Kill all paused sandboxes with specific metadata
+  sufy sandbox kill --all -s paused -m env=dev
+  sufy sbx kl -a -s paused -m env=dev`
+//line cmd/sufy/sandbox_kill_cmd.gox:33:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_kill_cmd.gox:34:1
+		cli.KillBatch(cli.KillInfo{SandboxIDs: args, All: this.All, State: this.State, Metadata: this.Metadata})
+	})
+}
+func (this *Cmd_sandbox_kill) Classfname() string {
+	return "sandbox_kill"
+}
+//line cmd/sufy/sandbox_list_cmd.gox:11
 func (this *Cmd_sandbox_list) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_list_cmd.gox:10:1
-	this.Use("list [flags]")
-//line cmd/sufy/sandbox_list_cmd.gox:12:1
-	this.Short("List all sandboxes for the specified account and project.")
-//line cmd/sufy/sandbox_list_cmd.gox:14:1
-	this.Run__0(func() {
+//line cmd/sufy/sandbox_list_cmd.gox:11:1
+	this.Use("list")
+//line cmd/sufy/sandbox_list_cmd.gox:13:1
+	this.Short("List sandboxes (alias: ls)")
 //line cmd/sufy/sandbox_list_cmd.gox:15:1
-		var limit *int32
-//line cmd/sufy/sandbox_list_cmd.gox:16:1
-		if this.Limit > 0 {
+	this.Command.Aliases = []string{"ls"}
 //line cmd/sufy/sandbox_list_cmd.gox:17:1
-			v := int32(this.Limit)
-//line cmd/sufy/sandbox_list_cmd.gox:18:1
-			limit = &v
-		}
-//line cmd/sufy/sandbox_list_cmd.gox:20:1
-		var nextToken *string
-//line cmd/sufy/sandbox_list_cmd.gox:21:1
-		if this.From != "" {
-//line cmd/sufy/sandbox_list_cmd.gox:22:1
-			nextToken = &this.From
-		}
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-		sandboxes := func() (_xgo_ret []sandbox.ListedSandbox) {
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-			var _xgo_err error
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-			_xgo_ret, _xgo_err = sandbox.List(this.Context(), &sandbox.ListParams{Limit: limit, NextToken: nextToken})
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-			if _xgo_err != nil {
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-				_xgo_err = errors.NewFrame(_xgo_err, "sandbox.list(context, limit = limit, nextToken = nextToken)", "cmd/sufy/sandbox_list_cmd.gox", 24, "main.Main")
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-				panic(_xgo_err)
-			}
-//line cmd/sufy/sandbox_list_cmd.gox:24:1
-			return
-		}()
-//line cmd/sufy/sandbox_list_cmd.gox:25:1
-		fmt.Println("sandboxes:")
-		for
-//line cmd/sufy/sandbox_list_cmd.gox:26:1
-		_, sbx := range sandboxes {
-//line cmd/sufy/sandbox_list_cmd.gox:27:1
-			fmt.Println(" ", sbx.SandboxID)
-		}
+	this.Command.Example = `  # List running sandboxes
+  sufy sandbox list
+  sufy sbx ls
+
+  # Filter by state and limit
+  sufy sandbox list --state running,paused --limit 10
+  sufy sbx ls -s running,paused -l 10
+
+  # Filter by metadata
+  sufy sandbox list -m env=prod,team=backend
+  sufy sbx ls -m env=prod,team=backend
+
+  # Output as JSON
+  sufy sandbox list -f json
+  sufy sbx ls -f json`
+//line cmd/sufy/sandbox_list_cmd.gox:33:1
+	var limit int32
+//line cmd/sufy/sandbox_list_cmd.gox:34:1
+	this.Command.Flags().Int32VarP(&limit, "limit", "l", 0, "maximum number of sandboxes to return")
+//line cmd/sufy/sandbox_list_cmd.gox:36:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_list_cmd.gox:37:1
+		cli.List(cli.ListInfo{State: this.State, Metadata: this.Metadata, Limit: limit, Format: this.Format})
 	})
 }
 func (this *Cmd_sandbox_list) Classfname() string {
 	return "sandbox_list"
+}
+//line cmd/sufy/sandbox_logs_cmd.gox:12
+func (this *Cmd_sandbox_logs) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_logs_cmd.gox:12:1
+	this.Use("logs <sandboxID>")
+//line cmd/sufy/sandbox_logs_cmd.gox:14:1
+	this.Short("View sandbox logs (alias: lg)")
+//line cmd/sufy/sandbox_logs_cmd.gox:16:1
+	this.Command.Aliases = []string{"lg"}
+//line cmd/sufy/sandbox_logs_cmd.gox:18:1
+	this.Command.Example = `  # View logs
+  sufy sandbox logs sb-xxxxxxxxxxxx
+  sufy sbx lg sb-xxxxxxxxxxxx
+
+  # Filter by level (WARN and above)
+  sufy sandbox logs sb-xxxxxxxxxxxx --level WARN
+  sufy sbx lg sb-xxxxxxxxxxxx --level WARN
+
+  # Stream logs in follow mode
+  sufy sandbox logs sb-xxxxxxxxxxxx -f
+  sufy sbx lg sb-xxxxxxxxxxxx -f
+
+  # Filter by logger prefix
+  sufy sandbox logs sb-xxxxxxxxxxxx --loggers envd,process
+  sufy sbx lg sb-xxxxxxxxxxxx --loggers envd,process
+
+  # Output as JSON
+  sufy sandbox logs sb-xxxxxxxxxxxx --format json
+  sufy sbx lg sb-xxxxxxxxxxxx --format json`
+//line cmd/sufy/sandbox_logs_cmd.gox:38:1
+	var limit int32
+//line cmd/sufy/sandbox_logs_cmd.gox:39:1
+	this.Command.Flags().Int32Var(&limit, "limit", 0, "maximum number of log entries to return")
+//line cmd/sufy/sandbox_logs_cmd.gox:41:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_logs_cmd.gox:42:1
+		if len(args) == 0 {
+//line cmd/sufy/sandbox_logs_cmd.gox:43:1
+			cli.Logs(cli.LogsInfo{})
+//line cmd/sufy/sandbox_logs_cmd.gox:44:1
+			return
+		}
+//line cmd/sufy/sandbox_logs_cmd.gox:46:1
+		cli.Logs(cli.LogsInfo{SandboxID: args[0], Level: this.Level, Limit: limit, Format: this.Format, Follow: this.Follow, Loggers: this.Loggers})
+	})
+}
+func (this *Cmd_sandbox_logs) Classfname() string {
+	return "sandbox_logs"
+}
+//line cmd/sufy/sandbox_metrics_cmd.gox:10
+func (this *Cmd_sandbox_metrics) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_metrics_cmd.gox:10:1
+	this.Use("metrics <sandboxID>")
+//line cmd/sufy/sandbox_metrics_cmd.gox:12:1
+	this.Short("View sandbox resource metrics (alias: mt)")
+//line cmd/sufy/sandbox_metrics_cmd.gox:14:1
+	this.Command.Aliases = []string{"mt"}
+//line cmd/sufy/sandbox_metrics_cmd.gox:16:1
+	this.Command.Example = `  # View current metrics
+  sufy sandbox metrics sb-xxxxxxxxxxxx
+  sufy sbx mt sb-xxxxxxxxxxxx
+
+  # Stream metrics in follow mode
+  sufy sandbox metrics sb-xxxxxxxxxxxx -f
+  sufy sbx mt sb-xxxxxxxxxxxx -f
+
+  # Output as JSON
+  sufy sandbox metrics sb-xxxxxxxxxxxx --format json
+  sufy sbx mt sb-xxxxxxxxxxxx --format json`
+//line cmd/sufy/sandbox_metrics_cmd.gox:28:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_metrics_cmd.gox:29:1
+		if len(args) == 0 {
+//line cmd/sufy/sandbox_metrics_cmd.gox:30:1
+			cli.Metrics(cli.MetricsInfo{})
+//line cmd/sufy/sandbox_metrics_cmd.gox:31:1
+			return
+		}
+//line cmd/sufy/sandbox_metrics_cmd.gox:33:1
+		cli.Metrics(cli.MetricsInfo{SandboxID: args[0], Format: this.Format, Follow: this.Follow})
+	})
+}
+func (this *Cmd_sandbox_metrics) Classfname() string {
+	return "sandbox_metrics"
+}
+//line cmd/sufy/sandbox_pause_cmd.gox:11
+func (this *Cmd_sandbox_pause) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_pause_cmd.gox:11:1
+	this.Use("pause [sandboxIDs...]")
+//line cmd/sufy/sandbox_pause_cmd.gox:13:1
+	this.Short("Pause one or more sandboxes (alias: ps)")
+//line cmd/sufy/sandbox_pause_cmd.gox:15:1
+	this.Command.Aliases = []string{"ps"}
+//line cmd/sufy/sandbox_pause_cmd.gox:17:1
+	this.Command.Example = `  # Pause a single sandbox
+  sufy sandbox pause sb-xxxxxxxxxxxx
+  sufy sbx ps sb-xxxxxxxxxxxx
+
+  # Pause multiple sandboxes
+  sufy sandbox pause sb-aaa sb-bbb sb-ccc
+  sufy sbx ps sb-aaa sb-bbb sb-ccc
+
+  # Pause all running sandboxes
+  sufy sandbox pause --all
+  sufy sbx ps -a
+
+  # Pause all with specific metadata
+  sufy sandbox pause --all -m env=dev
+  sufy sbx ps -a -m env=dev`
+//line cmd/sufy/sandbox_pause_cmd.gox:33:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_pause_cmd.gox:34:1
+		cli.PauseBatch(cli.PauseInfo{SandboxIDs: args, All: this.All, State: this.State, Metadata: this.Metadata})
+	})
+}
+func (this *Cmd_sandbox_pause) Classfname() string {
+	return "sandbox_pause"
+}
+//line cmd/sufy/sandbox_resume_cmd.gox:10
+func (this *Cmd_sandbox_resume) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_resume_cmd.gox:10:1
+	this.Use("resume [sandboxIDs...]")
+//line cmd/sufy/sandbox_resume_cmd.gox:12:1
+	this.Short("Resume one or more paused sandboxes (alias: rs)")
+//line cmd/sufy/sandbox_resume_cmd.gox:14:1
+	this.Command.Aliases = []string{"rs"}
+//line cmd/sufy/sandbox_resume_cmd.gox:16:1
+	this.Command.Example = `  # Resume a paused sandbox
+  sufy sandbox resume sb-xxxxxxxxxxxx
+  sufy sbx rs sb-xxxxxxxxxxxx
+
+  # Resume multiple sandboxes
+  sufy sandbox resume sb-aaa sb-bbb sb-ccc
+  sufy sbx rs sb-aaa sb-bbb sb-ccc
+
+  # Resume all paused sandboxes
+  sufy sandbox resume --all
+  sufy sbx rs -a
+
+  # Resume all with specific metadata
+  sufy sandbox resume --all -m env=staging
+  sufy sbx rs -a -m env=staging`
+//line cmd/sufy/sandbox_resume_cmd.gox:32:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_resume_cmd.gox:33:1
+		cli.ResumeBatch(cli.ResumeInfo{SandboxIDs: args, All: this.All, Metadata: this.Metadata})
+	})
+}
+func (this *Cmd_sandbox_resume) Classfname() string {
+	return "sandbox_resume"
+}
+//line cmd/sufy/sandbox_template_cmd.gox:5
+func (this *Cmd_sandbox_template) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_cmd.gox:5:1
+	this.Use("template")
+//line cmd/sufy/sandbox_template_cmd.gox:7:1
+	this.Short("Manage sandbox templates (alias: tpl)")
+//line cmd/sufy/sandbox_template_cmd.gox:9:1
+	this.Command.Aliases = []string{"tpl"}
+//line cmd/sufy/sandbox_template_cmd.gox:11:1
+	this.Command.Example = `  # View template subcommands
+  sufy sandbox template -h
+  sufy sbx tpl -h
+
+  # List all templates
+  sufy sandbox template list
+  sufy sbx tpl ls
+
+  # Build a new template
+  sufy sandbox template build --name my-template --from-image ubuntu:22.04 --wait
+  sufy sbx tpl bd --name my-template --from-image ubuntu:22.04 --wait
+
+  # Get template details
+  sufy sandbox template get tmpl-xxxxxxxxxxxx
+  sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_template_cmd.gox:27:1
+	ops.RegisterTemplateChildren(&this.Command.Command)
+//line cmd/sufy/sandbox_template_cmd.gox:29:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_cmd.gox:30:1
+		this.Help()
+	})
+}
+func (this *Cmd_sandbox_template) Classfname() string {
+	return "sandbox_template"
 }
 func main() {
 	new(App).Main()

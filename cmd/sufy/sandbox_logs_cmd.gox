@@ -1,0 +1,54 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Level   string `flag:"level, val: INFO, usage: filter by log level (DEBUG, INFO, WARN, ERROR). Higher levels are also shown"`
+	Format  string `flag:"format, val: pretty, usage: output format: pretty or json"`
+	Follow  bool   `flag:"follow, short: f, usage: keep streaming logs until the sandbox is closed"`
+	Loggers string `flag:"loggers, usage: filter logs by loggers (comma-separated prefixes)"`
+)
+
+use "logs <sandboxID>"
+
+short "View sandbox logs (alias: lg)"
+
+this.Command.Aliases = []string{"lg"}
+
+this.Command.Example = `  # View logs
+  sufy sandbox logs sb-xxxxxxxxxxxx
+  sufy sbx lg sb-xxxxxxxxxxxx
+
+  # Filter by level (WARN and above)
+  sufy sandbox logs sb-xxxxxxxxxxxx --level WARN
+  sufy sbx lg sb-xxxxxxxxxxxx --level WARN
+
+  # Stream logs in follow mode
+  sufy sandbox logs sb-xxxxxxxxxxxx -f
+  sufy sbx lg sb-xxxxxxxxxxxx -f
+
+  # Filter by logger prefix
+  sufy sandbox logs sb-xxxxxxxxxxxx --loggers envd,process
+  sufy sbx lg sb-xxxxxxxxxxxx --loggers envd,process
+
+  # Output as JSON
+  sufy sandbox logs sb-xxxxxxxxxxxx --format json
+  sufy sbx lg sb-xxxxxxxxxxxx --format json`
+
+var limit int32
+this.Command.Flags().Int32Var(&limit, "limit", 0, "maximum number of log entries to return")
+
+run args => {
+	if len(args) == 0 {
+		cli.Logs(cli.LogsInfo{})
+		return
+	}
+	cli.Logs(cli.LogsInfo{
+		SandboxID: args[0],
+		Level:     Level,
+		Limit:     limit,
+		Format:    Format,
+		Follow:    Follow,
+		Loggers:   Loggers,
+	})
+}

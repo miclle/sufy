@@ -1,0 +1,40 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	All      bool   `flag:"all, short: a, usage: pause all sandboxes"`
+	State    string `flag:"state, short: s, usage: filter by state when using --all (comma-separated: running,paused). Defaults to running"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
+)
+
+use "pause [sandboxIDs...]"
+
+short "Pause one or more sandboxes (alias: ps)"
+
+this.Command.Aliases = []string{"ps"}
+
+this.Command.Example = `  # Pause a single sandbox
+  sufy sandbox pause sb-xxxxxxxxxxxx
+  sufy sbx ps sb-xxxxxxxxxxxx
+
+  # Pause multiple sandboxes
+  sufy sandbox pause sb-aaa sb-bbb sb-ccc
+  sufy sbx ps sb-aaa sb-bbb sb-ccc
+
+  # Pause all running sandboxes
+  sufy sandbox pause --all
+  sufy sbx ps -a
+
+  # Pause all with specific metadata
+  sufy sandbox pause --all -m env=dev
+  sufy sbx ps -a -m env=dev`
+
+run args => {
+	cli.PauseBatch(cli.PauseInfo{
+		SandboxIDs: args,
+		All:        All,
+		State:      State,
+		Metadata:   Metadata,
+	})
+}

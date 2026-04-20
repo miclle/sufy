@@ -1,0 +1,40 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	All      bool   `flag:"all, short: a, usage: kill all sandboxes"`
+	State    string `flag:"state, short: s, usage: filter by state when using --all (comma-separated: running,paused). Defaults to running"`
+	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
+)
+
+use "kill [sandboxIDs...]"
+
+short "Kill one or more sandboxes (alias: kl)"
+
+this.Command.Aliases = []string{"kl"}
+
+this.Command.Example = `  # Kill a single sandbox
+  sufy sandbox kill sb-xxxxxxxxxxxx
+  sufy sbx kl sb-xxxxxxxxxxxx
+
+  # Kill multiple sandboxes
+  sufy sandbox kill sb-aaa sb-bbb sb-ccc
+  sufy sbx kl sb-aaa sb-bbb sb-ccc
+
+  # Kill all running sandboxes
+  sufy sandbox kill --all
+  sufy sbx kl -a
+
+  # Kill all paused sandboxes with specific metadata
+  sufy sandbox kill --all -s paused -m env=dev
+  sufy sbx kl -a -s paused -m env=dev`
+
+run args => {
+	cli.KillBatch(cli.KillInfo{
+		SandboxIDs: args,
+		All:        All,
+		State:      State,
+		Metadata:   Metadata,
+	})
+}

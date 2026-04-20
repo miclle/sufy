@@ -1,0 +1,21 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "connect <sandboxID>"
+
+short "Connect to an existing sandbox terminal (alias: cn)"
+
+this.Command.Aliases = []string{"cn"}
+
+this.Command.Example = `  # Connect to a sandbox by ID
+  sufy sandbox connect sb-xxxxxxxxxxxx
+  sufy sbx cn sb-xxxxxxxxxxxx`
+
+run args => {
+	if len(args) == 0 {
+		cli.Connect("")
+		return
+	}
+	cli.Connect(args[0])
+}

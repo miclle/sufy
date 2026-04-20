@@ -1,0 +1,31 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/ops"
+)
+
+use "template"
+
+short "Manage sandbox templates (alias: tpl)"
+
+this.Command.Aliases = []string{"tpl"}
+
+this.Command.Example = `  # View template subcommands
+  sufy sandbox template -h
+  sufy sbx tpl -h
+
+  # List all templates
+  sufy sandbox template list
+  sufy sbx tpl ls
+
+  # Build a new template
+  sufy sandbox template build --name my-template --from-image ubuntu:22.04 --wait
+  sufy sbx tpl bd --name my-template --from-image ubuntu:22.04 --wait
+
+  # Get template details
+  sufy sandbox template get tmpl-xxxxxxxxxxxx
+  sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
+
+ops.RegisterTemplateChildren(&this.Command.Command)
+
+run => {
+	help
+}
