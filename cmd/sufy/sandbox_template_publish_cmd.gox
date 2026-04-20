@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -26,5 +26,5 @@ run args => {
 		help
 		return
 	}
-	cli.TemplateSetPublic(args, true, Yes, Sel, "publish")
+	sandbox.TemplateSetPublic(args, true, Yes, Sel, "publish")
 }

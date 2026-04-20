@@ -1,6 +1,6 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "update <ruleID>"
@@ -28,5 +28,5 @@ this.Command.Flags().StringVar(&baseURL, "base-url", "", "new base URL or target
 this.Command.Flags().StringVar(&headers, "headers", "", "new HTTP headers for custom http injection (comma-separated key=value pairs)")
 
 run args => {
-	cli.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
+	sandbox.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
 }

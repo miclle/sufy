@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"context"
 	"fmt"
 	"os"
 
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // InjectionRuleList lists all injection rules.
@@ -59,7 +59,7 @@ func InjectionRuleList(format string) {
 	_ = tw.Flush()
 }
 
-func injectionTypeLabel(s sandbox.InjectionSpec) string {
+func injectionTypeLabel(s sdk.InjectionSpec) string {
 	switch {
 	case s.OpenAI != nil:
 		return "openai"
@@ -98,7 +98,7 @@ func InjectionRuleCreate(name, typ, apiKey, baseURL, headersRaw string) {
 	client := MustNewSandboxClient()
 	ctx := context.Background()
 
-	r, err := client.CreateInjectionRule(ctx, sandbox.CreateInjectionRuleParams{
+	r, err := client.CreateInjectionRule(ctx, sdk.CreateInjectionRuleParams{
 		Name:      name,
 		Injection: spec,
 	})
@@ -111,7 +111,7 @@ func InjectionRuleCreate(name, typ, apiKey, baseURL, headersRaw string) {
 
 // InjectionRuleUpdate updates an existing injection rule.
 func InjectionRuleUpdate(ruleID, name, typ, apiKey, baseURL, headersRaw string) {
-	params := sandbox.UpdateInjectionRuleParams{}
+	params := sdk.UpdateInjectionRuleParams{}
 	if name != "" {
 		params.Name = &name
 	}

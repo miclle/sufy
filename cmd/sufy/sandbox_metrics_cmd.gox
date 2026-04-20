@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -27,10 +27,10 @@ this.Command.Example = `  # View current metrics
 
 run args => {
 	if len(args) == 0 {
-		cli.Metrics(cli.MetricsInfo{})
+		sandbox.Metrics(sandbox.MetricsInfo{})
 		return
 	}
-	cli.Metrics(cli.MetricsInfo{
+	sandbox.Metrics(sandbox.MetricsInfo{
 		SandboxID: args[0],
 		Format:    Format,
 		Follow:    Follow,

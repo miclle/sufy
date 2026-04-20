@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -30,5 +30,5 @@ run args => {
 		help
 		return
 	}
-	cli.TemplateDelete(args, Yes, Sel)
+	sandbox.TemplateDelete(args, Yes, Sel)
 }

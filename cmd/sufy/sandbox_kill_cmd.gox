@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -31,7 +31,7 @@ this.Command.Example = `  # Kill a single sandbox
   sufy sbx kl -a -s paused -m env=dev`
 
 run args => {
-	cli.KillBatch(cli.KillInfo{
+	sandbox.KillBatch(sandbox.KillInfo{
 		SandboxIDs: args,
 		All:        All,
 		State:      State,

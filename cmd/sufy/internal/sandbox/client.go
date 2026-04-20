@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-// Package cli provides shared helpers for the sufy sandbox CLI commands.
-package cli
+// Package sandbox provides the handlers and shared helpers for the sufy sandbox CLI commands.
+package sandbox
 
 import (
 	"fmt"
 	"os"
 
 	"github.com/sufy-dev/sufy/auth"
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // Environment variable names read by the CLI for authentication.
@@ -46,7 +46,7 @@ const (
 //   - "ak-sk"   — SUFY_ACCESS_KEY + SUFY_SECRET_KEY
 //
 // Otherwise credentials are selected automatically with AK/SK taking priority.
-func NewSandboxClient() (*sandbox.Client, error) {
+func NewSandboxClient() (*sdk.Client, error) {
 	method := os.Getenv(EnvAuthMethod)
 
 	var cred *auth.Credentials
@@ -84,7 +84,7 @@ func NewSandboxClient() (*sandbox.Client, error) {
 		baseURL = os.Getenv(EnvSandboxURL)
 	}
 
-	return sandbox.New(&sandbox.Config{
+	return sdk.New(&sdk.Config{
 		APIKey:      apiKey,
 		Credentials: cred,
 		BaseURL:     baseURL,
@@ -93,7 +93,7 @@ func NewSandboxClient() (*sandbox.Client, error) {
 
 // MustNewSandboxClient is like NewSandboxClient but prints the error and exits
 // on failure. Intended for use at the top of command handlers.
-func MustNewSandboxClient() *sandbox.Client {
+func MustNewSandboxClient() *sdk.Client {
 	c, err := NewSandboxClient()
 	if err != nil {
 		PrintError("%v", err)

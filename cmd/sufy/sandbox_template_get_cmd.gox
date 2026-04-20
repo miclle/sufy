@@ -1,6 +1,6 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "get <templateID>"
@@ -15,5 +15,5 @@ this.Command.Example = `  # Get template details
   sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
 
 run args => {
-	cli.TemplateGet(args[0])
+	sandbox.TemplateGet(args[0])
 }

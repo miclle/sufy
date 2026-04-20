@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -34,7 +34,7 @@ var limit int32
 this.Command.Flags().Int32VarP(&limit, "limit", "l", 0, "maximum number of sandboxes to return")
 
 run => {
-	cli.List(cli.ListInfo{
+	sandbox.List(sandbox.ListInfo{
 		State:    State,
 		Metadata: Metadata,
 		Limit:    limit,

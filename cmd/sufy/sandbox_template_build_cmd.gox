@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "build"
@@ -35,7 +35,7 @@ this.Command.Example = `  # Create and build a new template from a Docker image
   sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
   sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
 
-var info cli.BuildInfo
+var info sandbox.BuildInfo
 this.Command.Flags().StringVar(&info.Name, "name", "", "template name (for creating a new template)")
 this.Command.Flags().StringVar(&info.TemplateID, "template-id", "", "existing template ID (for rebuilding)")
 this.Command.Flags().StringVar(&info.FromImage, "from-image", "", "base Docker image")
@@ -50,5 +50,5 @@ this.Command.Flags().StringVar(&info.Dockerfile, "dockerfile", "", "path to Dock
 this.Command.Flags().StringVar(&info.Path, "path", "", "build context directory (defaults to Dockerfile's parent)")
 
 run => {
-	cli.TemplateBuild(info)
+	sandbox.TemplateBuild(info)
 }

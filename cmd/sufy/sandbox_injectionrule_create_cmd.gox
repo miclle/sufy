@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "create"
@@ -28,5 +28,5 @@ _ = this.Command.MarkFlagRequired("name")
 _ = this.Command.MarkFlagRequired("type")
 
 run => {
-	cli.InjectionRuleCreate(name, typ, apiKey, baseURL, headers)
+	sandbox.InjectionRuleCreate(name, typ, apiKey, baseURL, headers)
 }

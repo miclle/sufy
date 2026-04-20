@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"context"
@@ -24,7 +24,7 @@ import (
 
 	"golang.org/x/term"
 
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // batchedWriter buffers stdin bytes and flushes them on an interval so the
@@ -97,7 +97,7 @@ func detectResize(previous terminalSize, width, height int, err error) (terminal
 // RunTerminalSession bridges the local TTY with a PTY running in the sandbox.
 // It sets raw mode, forwards resize events, refreshes the sandbox timeout, and
 // proxies stdin through a batched writer.
-func RunTerminalSession(ctx context.Context, sb *sandbox.Sandbox) {
+func RunTerminalSession(ctx context.Context, sb *sdk.Sandbox) {
 	width, height, err := term.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
 		width, height = 80, 24
@@ -113,10 +113,10 @@ func RunTerminalSession(ctx context.Context, sb *sandbox.Sandbox) {
 	ptyCtx, ptyCancel := context.WithCancel(ctx)
 	defer ptyCancel()
 
-	handle, err := sb.Pty().Create(ptyCtx, sandbox.PtySize{
+	handle, err := sb.Pty().Create(ptyCtx, sdk.PtySize{
 		Cols: uint32(width),
 		Rows: uint32(height),
-	}, sandbox.WithOnPtyData(func(data []byte) {
+	}, sdk.WithOnPtyData(func(data []byte) {
 		os.Stdout.Write(data)
 	}))
 	if err != nil {
@@ -136,7 +136,7 @@ func RunTerminalSession(ctx context.Context, sb *sandbox.Sandbox) {
 	startResizeMonitor(ptyCtx, resizeEvents, terminalSize{width: width, height: height},
 		func() (int, int, error) { return term.GetSize(int(os.Stdin.Fd())) },
 		func(w, h int) {
-			_ = sb.Pty().Resize(ptyCtx, pid, sandbox.PtySize{Cols: uint32(w), Rows: uint32(h)})
+			_ = sb.Pty().Resize(ptyCtx, pid, sdk.PtySize{Cols: uint32(w), Rows: uint32(h)})
 		})
 
 	// Keep-alive loop: matches e2b CLI (5s interval, 30s extension).

@@ -14,20 +14,34 @@
  * limitations under the License.
  */
 
-package cli
+//go:build !windows
+
+package sandbox
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
-// signalNotify registers for SIGINT and SIGTERM on the given channel.
-func signalNotify(ch chan<- os.Signal) {
-	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
-}
-
-// signalStop stops signal delivery to the channel.
-func signalStop(ch chan<- os.Signal) {
-	signal.Stop(ch)
+// notifyTerminalResize forwards SIGWINCH notifications onto the resize-event
+// channel. On Unix the OS signals us when the TTY is resized.
+func notifyTerminalResize(ctx context.Context, resizeEvents chan<- struct{}) {
+	sigWinch := make(chan os.Signal, 1)
+	signal.Notify(sigWinch, syscall.SIGWINCH)
+	go func() {
+		defer signal.Stop(sigWinch)
+		for {
+			select {
+			case <-sigWinch:
+				select {
+				case resizeEvents <- struct{}{}:
+				default:
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
 }

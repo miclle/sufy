@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"context"
@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // TemplateList lists all sandbox templates.
@@ -174,7 +174,7 @@ func TemplateSetPublic(templateIDs []string, public, yes, sel bool, action strin
 	}
 
 	for _, id := range templateIDs {
-		err := client.UpdateTemplate(ctx, id, sandbox.UpdateTemplateParams{Public: &public})
+		err := client.UpdateTemplate(ctx, id, sdk.UpdateTemplateParams{Public: &public})
 		if err != nil {
 			PrintError("update template %s failed: %v", id, err)
 			continue

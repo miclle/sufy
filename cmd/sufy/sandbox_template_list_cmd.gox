@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "list"
@@ -20,5 +20,5 @@ var format string
 this.Command.Flags().StringVar(&format, "format", "pretty", "output format: pretty or json")
 
 run => {
-	cli.TemplateList(format)
+	sandbox.TemplateList(format)
 }

@@ -1,6 +1,6 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -63,7 +63,7 @@ run args => {
 	if len(args) > 0 {
 		templateID = args[0]
 	}
-	cli.Create(cli.CreateInfo{
+	sandbox.Create(sandbox.CreateInfo{
 		TemplateID:       templateID,
 		Timeout:          timeout,
 		Metadata:         Metadata,

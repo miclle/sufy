@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "init"
@@ -22,11 +22,11 @@ this.Command.Example = `  # Interactive mode
   sufy sandbox template init --name my-api --language typescript --path ./my-api
   sufy sbx tpl it --name my-api --language typescript --path ./my-api`
 
-var info cli.InitInfo
+var info sandbox.InitInfo
 this.Command.Flags().StringVar(&info.Name, "name", "", "template project name")
 this.Command.Flags().StringVar(&info.Language, "language", "", "programming language (go, typescript, python)")
 this.Command.Flags().StringVar(&info.Path, "path", "", "output directory (defaults to ./<name>)")
 
 run => {
-	cli.TemplateInit(info)
+	sandbox.TemplateInit(info)
 }

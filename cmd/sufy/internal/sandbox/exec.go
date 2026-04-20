@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"context"
@@ -23,7 +23,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // stdinChunkSize bounds how much stdin is forwarded per SendStdin RPC.
@@ -31,10 +31,10 @@ const stdinChunkSize = 64 * 1024
 
 // ExecForeground runs a command in the foreground, forwarding stdout, stderr,
 // stdin, SIGINT/SIGTERM, and the exit code. It calls os.Exit on completion.
-func ExecForeground(ctx context.Context, sb *sandbox.Sandbox, cmd string, opts []sandbox.CommandOption) {
+func ExecForeground(ctx context.Context, sb *sdk.Sandbox, cmd string, opts []sdk.CommandOption) {
 	opts = append(opts,
-		sandbox.WithOnStdout(func(data []byte) { os.Stdout.Write(data) }),
-		sandbox.WithOnStderr(func(data []byte) { os.Stderr.Write(data) }),
+		sdk.WithOnStdout(func(data []byte) { os.Stdout.Write(data) }),
+		sdk.WithOnStderr(func(data []byte) { os.Stderr.Write(data) }),
 	)
 
 	handle, err := sb.Commands().Start(ctx, cmd, opts...)
@@ -75,7 +75,7 @@ func ExecForeground(ctx context.Context, sb *sandbox.Sandbox, cmd string, opts [
 
 // ExecBackground starts a command detached and prints its PID. When stdin is
 // piped it forwards stdin to the remote process before returning.
-func ExecBackground(ctx context.Context, sb *sandbox.Sandbox, cmd string, opts []sandbox.CommandOption) {
+func ExecBackground(ctx context.Context, sb *sdk.Sandbox, cmd string, opts []sdk.CommandOption) {
 	handle, err := sb.Commands().Start(ctx, cmd, opts...)
 	if err != nil {
 		PrintError("exec failed: %v", err)
@@ -104,7 +104,7 @@ func IsPipedStdin() bool {
 	return fi.Mode()&os.ModeCharDevice == 0
 }
 
-func sendStdinToSandbox(ctx context.Context, sb *sandbox.Sandbox, pid uint32) {
+func sendStdinToSandbox(ctx context.Context, sb *sdk.Sandbox, pid uint32) {
 	buf := make([]byte, stdinChunkSize)
 	for {
 		n, err := os.Stdin.Read(buf)

@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/goplus/cobra"
 	"github.com/goplus/cobra/xcmd"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 const _ = true
@@ -231,12 +231,12 @@ func (this *Cmd_sandbox_connect) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_connect_cmd.gox:16:1
 		if len(args) == 0 {
 //line cmd/sufy/sandbox_connect_cmd.gox:17:1
-			cli.Connect("")
+			sandbox.Connect("")
 //line cmd/sufy/sandbox_connect_cmd.gox:18:1
 			return
 		}
 //line cmd/sufy/sandbox_connect_cmd.gox:20:1
-		cli.Connect(args[0])
+		sandbox.Connect(args[0])
 	})
 }
 func (this *Cmd_sandbox_connect) Classfname() string {
@@ -311,7 +311,7 @@ func (this *Cmd_sandbox_create) Main(_xgo_arg0 string) {
 			templateID = args[0]
 		}
 //line cmd/sufy/sandbox_create_cmd.gox:66:1
-		cli.Create(cli.CreateInfo{TemplateID: templateID, Timeout: timeout, Metadata: this.Metadata, Detach: this.Detach, EnvVars: envVars, AutoPause: this.AutoPause, InjectionRuleIDs: injectionRuleIDs, InlineInjections: inlineInjections})
+		sandbox.Create(sandbox.CreateInfo{TemplateID: templateID, Timeout: timeout, Metadata: this.Metadata, Detach: this.Detach, EnvVars: envVars, AutoPause: this.AutoPause, InjectionRuleIDs: injectionRuleIDs, InlineInjections: inlineInjections})
 	})
 }
 func (this *Cmd_sandbox_create) Classfname() string {
@@ -353,7 +353,7 @@ func (this *Cmd_sandbox_exec) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_exec_cmd.gox:40:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_exec_cmd.gox:41:1
-		cli.Exec(cli.ExecInfo{SandboxID: args[0], Command: args[1:], Background: this.Background, Cwd: this.Cwd, User: this.User, EnvVars: envVars})
+		sandbox.Exec(sandbox.ExecInfo{SandboxID: args[0], Command: args[1:], Background: this.Background, Cwd: this.Cwd, User: this.User, EnvVars: envVars})
 	})
 }
 func (this *Cmd_sandbox_exec) Classfname() string {
@@ -431,7 +431,7 @@ func (this *Cmd_sandbox_injectionrule_create) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_injectionrule_create_cmd.gox:30:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_injectionrule_create_cmd.gox:31:1
-		cli.InjectionRuleCreate(name, typ, apiKey, baseURL, headers)
+		sandbox.InjectionRuleCreate(name, typ, apiKey, baseURL, headers)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_create) Classfname() string {
@@ -468,7 +468,7 @@ func (this *Cmd_sandbox_injectionrule_delete) Main(_xgo_arg0 string) {
 			return
 		}
 //line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:33:1
-		cli.InjectionRuleDelete(args, this.Yes, this.Sel)
+		sandbox.InjectionRuleDelete(args, this.Yes, this.Sel)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_delete) Classfname() string {
@@ -492,7 +492,7 @@ func (this *Cmd_sandbox_injectionrule_get) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_injectionrule_get_cmd.gox:17:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_injectionrule_get_cmd.gox:18:1
-		cli.InjectionRuleGet(args[0])
+		sandbox.InjectionRuleGet(args[0])
 	})
 }
 func (this *Cmd_sandbox_injectionrule_get) Classfname() string {
@@ -522,7 +522,7 @@ func (this *Cmd_sandbox_injectionrule_list) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_injectionrule_list_cmd.gox:22:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_injectionrule_list_cmd.gox:23:1
-		cli.InjectionRuleList(format)
+		sandbox.InjectionRuleList(format)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_list) Classfname() string {
@@ -564,7 +564,7 @@ func (this *Cmd_sandbox_injectionrule_update) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_injectionrule_update_cmd.gox:30:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_injectionrule_update_cmd.gox:31:1
-		cli.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
+		sandbox.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_update) Classfname() string {
@@ -598,7 +598,7 @@ func (this *Cmd_sandbox_kill) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_kill_cmd.gox:33:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_kill_cmd.gox:34:1
-		cli.KillBatch(cli.KillInfo{SandboxIDs: args, All: this.All, State: this.State, Metadata: this.Metadata})
+		sandbox.KillBatch(sandbox.KillInfo{SandboxIDs: args, All: this.All, State: this.State, Metadata: this.Metadata})
 	})
 }
 func (this *Cmd_sandbox_kill) Classfname() string {
@@ -636,7 +636,7 @@ func (this *Cmd_sandbox_list) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_list_cmd.gox:36:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_list_cmd.gox:37:1
-		cli.List(cli.ListInfo{State: this.State, Metadata: this.Metadata, Limit: limit, Format: this.Format})
+		sandbox.List(sandbox.ListInfo{State: this.State, Metadata: this.Metadata, Limit: limit, Format: this.Format})
 	})
 }
 func (this *Cmd_sandbox_list) Classfname() string {
@@ -680,12 +680,12 @@ func (this *Cmd_sandbox_logs) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_logs_cmd.gox:42:1
 		if len(args) == 0 {
 //line cmd/sufy/sandbox_logs_cmd.gox:43:1
-			cli.Logs(cli.LogsInfo{})
+			sandbox.Logs(sandbox.LogsInfo{})
 //line cmd/sufy/sandbox_logs_cmd.gox:44:1
 			return
 		}
 //line cmd/sufy/sandbox_logs_cmd.gox:46:1
-		cli.Logs(cli.LogsInfo{SandboxID: args[0], Level: this.Level, Limit: limit, Format: this.Format, Follow: this.Follow, Loggers: this.Loggers})
+		sandbox.Logs(sandbox.LogsInfo{SandboxID: args[0], Level: this.Level, Limit: limit, Format: this.Format, Follow: this.Follow, Loggers: this.Loggers})
 	})
 }
 func (this *Cmd_sandbox_logs) Classfname() string {
@@ -717,12 +717,12 @@ func (this *Cmd_sandbox_metrics) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_metrics_cmd.gox:29:1
 		if len(args) == 0 {
 //line cmd/sufy/sandbox_metrics_cmd.gox:30:1
-			cli.Metrics(cli.MetricsInfo{})
+			sandbox.Metrics(sandbox.MetricsInfo{})
 //line cmd/sufy/sandbox_metrics_cmd.gox:31:1
 			return
 		}
 //line cmd/sufy/sandbox_metrics_cmd.gox:33:1
-		cli.Metrics(cli.MetricsInfo{SandboxID: args[0], Format: this.Format, Follow: this.Follow})
+		sandbox.Metrics(sandbox.MetricsInfo{SandboxID: args[0], Format: this.Format, Follow: this.Follow})
 	})
 }
 func (this *Cmd_sandbox_metrics) Classfname() string {
@@ -756,7 +756,7 @@ func (this *Cmd_sandbox_pause) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_pause_cmd.gox:33:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_pause_cmd.gox:34:1
-		cli.PauseBatch(cli.PauseInfo{SandboxIDs: args, All: this.All, State: this.State, Metadata: this.Metadata})
+		sandbox.PauseBatch(sandbox.PauseInfo{SandboxIDs: args, All: this.All, State: this.State, Metadata: this.Metadata})
 	})
 }
 func (this *Cmd_sandbox_pause) Classfname() string {
@@ -790,7 +790,7 @@ func (this *Cmd_sandbox_resume) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_resume_cmd.gox:32:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_resume_cmd.gox:33:1
-		cli.ResumeBatch(cli.ResumeInfo{SandboxIDs: args, All: this.All, Metadata: this.Metadata})
+		sandbox.ResumeBatch(sandbox.ResumeInfo{SandboxIDs: args, All: this.All, Metadata: this.Metadata})
 	})
 }
 func (this *Cmd_sandbox_resume) Classfname() string {
@@ -833,7 +833,7 @@ Supports three build modes:
   sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
   sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
 //line cmd/sufy/sandbox_template_build_cmd.gox:38:1
-	var info cli.BuildInfo
+	var info sandbox.BuildInfo
 //line cmd/sufy/sandbox_template_build_cmd.gox:39:1
 	this.Command.Flags().StringVar(&info.Name, "name", "", "template name (for creating a new template)")
 //line cmd/sufy/sandbox_template_build_cmd.gox:40:1
@@ -861,7 +861,7 @@ Supports three build modes:
 //line cmd/sufy/sandbox_template_build_cmd.gox:52:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_template_build_cmd.gox:53:1
-		cli.TemplateBuild(info)
+		sandbox.TemplateBuild(info)
 	})
 }
 func (this *Cmd_sandbox_template_build) Classfname() string {
@@ -885,7 +885,7 @@ func (this *Cmd_sandbox_template_builds) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_template_builds_cmd.gox:17:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_template_builds_cmd.gox:18:1
-		cli.TemplateBuilds(args[0], args[1])
+		sandbox.TemplateBuilds(args[0], args[1])
 	})
 }
 func (this *Cmd_sandbox_template_builds) Classfname() string {
@@ -956,7 +956,7 @@ func (this *Cmd_sandbox_template_delete) Main(_xgo_arg0 string) {
 			return
 		}
 //line cmd/sufy/sandbox_template_delete_cmd.gox:33:1
-		cli.TemplateDelete(args, this.Yes, this.Sel)
+		sandbox.TemplateDelete(args, this.Yes, this.Sel)
 	})
 }
 func (this *Cmd_sandbox_template_delete) Classfname() string {
@@ -980,7 +980,7 @@ func (this *Cmd_sandbox_template_get) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_template_get_cmd.gox:17:1
 	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_template_get_cmd.gox:18:1
-		cli.TemplateGet(args[0])
+		sandbox.TemplateGet(args[0])
 	})
 }
 func (this *Cmd_sandbox_template_get) Classfname() string {
@@ -1010,7 +1010,7 @@ func (this *Cmd_sandbox_template_init) Main(_xgo_arg0 string) {
   sufy sandbox template init --name my-api --language typescript --path ./my-api
   sufy sbx tpl it --name my-api --language typescript --path ./my-api`
 //line cmd/sufy/sandbox_template_init_cmd.gox:25:1
-	var info cli.InitInfo
+	var info sandbox.InitInfo
 //line cmd/sufy/sandbox_template_init_cmd.gox:26:1
 	this.Command.Flags().StringVar(&info.Name, "name", "", "template project name")
 //line cmd/sufy/sandbox_template_init_cmd.gox:27:1
@@ -1020,7 +1020,7 @@ func (this *Cmd_sandbox_template_init) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_template_init_cmd.gox:30:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_template_init_cmd.gox:31:1
-		cli.TemplateInit(info)
+		sandbox.TemplateInit(info)
 	})
 }
 func (this *Cmd_sandbox_template_init) Classfname() string {
@@ -1050,7 +1050,7 @@ func (this *Cmd_sandbox_template_list) Main(_xgo_arg0 string) {
 //line cmd/sufy/sandbox_template_list_cmd.gox:22:1
 	this.Run__0(func() {
 //line cmd/sufy/sandbox_template_list_cmd.gox:23:1
-		cli.TemplateList(format)
+		sandbox.TemplateList(format)
 	})
 }
 func (this *Cmd_sandbox_template_list) Classfname() string {
@@ -1083,7 +1083,7 @@ func (this *Cmd_sandbox_template_publish) Main(_xgo_arg0 string) {
 			return
 		}
 //line cmd/sufy/sandbox_template_publish_cmd.gox:29:1
-		cli.TemplateSetPublic(args, true, this.Yes, this.Sel, "publish")
+		sandbox.TemplateSetPublic(args, true, this.Yes, this.Sel, "publish")
 	})
 }
 func (this *Cmd_sandbox_template_publish) Classfname() string {
@@ -1116,7 +1116,7 @@ func (this *Cmd_sandbox_template_unpublish) Main(_xgo_arg0 string) {
 			return
 		}
 //line cmd/sufy/sandbox_template_unpublish_cmd.gox:29:1
-		cli.TemplateSetPublic(args, false, this.Yes, this.Sel, "unpublish")
+		sandbox.TemplateSetPublic(args, false, this.Yes, this.Sel, "unpublish")
 	})
 }
 func (this *Cmd_sandbox_template_unpublish) Classfname() string {

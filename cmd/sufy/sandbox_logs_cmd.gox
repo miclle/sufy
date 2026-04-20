@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -40,10 +40,10 @@ this.Command.Flags().Int32Var(&limit, "limit", 0, "maximum number of log entries
 
 run args => {
 	if len(args) == 0 {
-		cli.Logs(cli.LogsInfo{})
+		sandbox.Logs(sandbox.LogsInfo{})
 		return
 	}
-	cli.Logs(cli.LogsInfo{
+	sandbox.Logs(sandbox.LogsInfo{
 		SandboxID: args[0],
 		Level:     Level,
 		Limit:     limit,

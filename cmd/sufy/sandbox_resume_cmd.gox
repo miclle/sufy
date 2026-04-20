@@ -1,5 +1,5 @@
 import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -30,7 +30,7 @@ this.Command.Example = `  # Resume a paused sandbox
   sufy sbx rs -a -m env=staging`
 
 run args => {
-	cli.ResumeBatch(cli.ResumeInfo{
+	sandbox.ResumeBatch(sandbox.ResumeInfo{
 		SandboxIDs: args,
 		All:        All,
 		Metadata:   Metadata,

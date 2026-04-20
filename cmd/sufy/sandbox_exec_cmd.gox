@@ -1,6 +1,6 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 var (
@@ -38,7 +38,7 @@ var envVars []string
 this.Command.Flags().StringArrayVarP(&envVars, "env", "e", nil, "environment variables (KEY=VALUE, can be specified multiple times)")
 
 run args => {
-	cli.Exec(cli.ExecInfo{
+	sandbox.Exec(sandbox.ExecInfo{
 		SandboxID:  args[0],
 		Command:    args[1:],
 		Background: Background,

@@ -1,6 +1,6 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
 )
 
 use "builds <templateID> <buildID>"
@@ -15,5 +15,5 @@ this.Command.Example = `  # View build status
   sufy sbx tpl bds tmpl-xxxxxxxxxxxx build-xxxxxxxxxxxx`
 
 run args => {
-	cli.TemplateBuilds(args[0], args[1])
+	sandbox.TemplateBuilds(args[0], args[1])
 }

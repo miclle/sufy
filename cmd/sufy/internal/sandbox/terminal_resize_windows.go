@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-//go:build !windows
+//go:build windows
 
-package cli
+package sandbox
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
+	"time"
 )
 
-// notifyTerminalResize forwards SIGWINCH notifications onto the resize-event
-// channel. On Unix the OS signals us when the TTY is resized.
+// windowsResizePollInterval is the polling interval used on Windows in the
+// absence of a SIGWINCH equivalent. Matches the e2b CLI default.
+const windowsResizePollInterval = 200 * time.Millisecond
+
+// notifyTerminalResize periodically signals a potential resize on Windows so
+// the caller can re-query the terminal size.
 func notifyTerminalResize(ctx context.Context, resizeEvents chan<- struct{}) {
-	sigWinch := make(chan os.Signal, 1)
-	signal.Notify(sigWinch, syscall.SIGWINCH)
 	go func() {
-		defer signal.Stop(sigWinch)
+		ticker := time.NewTicker(windowsResizePollInterval)
+		defer ticker.Stop()
 		for {
 			select {
-			case <-sigWinch:
+			case <-ticker.C:
 				select {
 				case resizeEvents <- struct{}{}:
 				default:

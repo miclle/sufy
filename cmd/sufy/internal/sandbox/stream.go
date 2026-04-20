@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"context"
@@ -22,12 +22,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // WatchSandboxRunning closes done when the sandbox stops responding. Used by
 // `logs --follow` and `metrics --follow` to terminate the streaming loop.
-func WatchSandboxRunning(ctx context.Context, sb *sandbox.Sandbox, done chan<- struct{}) {
+func WatchSandboxRunning(ctx context.Context, sb *sdk.Sandbox, done chan<- struct{}) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -47,7 +47,7 @@ func WatchSandboxRunning(ctx context.Context, sb *sandbox.Sandbox, done chan<- s
 // PrintLogEntries renders sandbox logs to stdout, applying the minimum-level
 // and logger-prefix filters. Falls back to raw LogLine rendering when the
 // structured LogEntries field is empty.
-func PrintLogEntries(logs *sandbox.SandboxLogs, level string, loggerPrefixes []string) {
+func PrintLogEntries(logs *sdk.SandboxLogs, level string, loggerPrefixes []string) {
 	if len(logs.LogEntries) > 0 {
 		for _, entry := range logs.LogEntries {
 			if !IsLogLevelIncluded(string(entry.Level), level) {

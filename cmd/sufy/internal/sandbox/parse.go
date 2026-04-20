@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"fmt"
 	"net/url"
 	"strings"
 
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // DefaultState is the default sandbox state filter when none is specified.
@@ -29,13 +29,13 @@ const DefaultState = "running"
 
 // ParseStates parses a comma-separated state list into SandboxState values.
 // Empty entries are skipped.
-func ParseStates(raw string) []sandbox.SandboxState {
+func ParseStates(raw string) []sdk.SandboxState {
 	parts := strings.Split(raw, ",")
-	states := make([]sandbox.SandboxState, 0, len(parts))
+	states := make([]sdk.SandboxState, 0, len(parts))
 	for _, s := range parts {
 		s = strings.TrimSpace(s)
 		if s != "" {
-			states = append(states, sandbox.SandboxState(s))
+			states = append(states, sdk.SandboxState(s))
 		}
 	}
 	return states
@@ -101,53 +101,53 @@ func SplitCSV(raw string) []string {
 // BuildInjectionSpec and ParseInlineInjection.
 const supportedInjectionTypes = "openai, anthropic, gemini, http"
 
-// BuildInjectionSpec constructs a sandbox.InjectionSpec for the given provider
+// BuildInjectionSpec constructs a sdk.InjectionSpec for the given provider
 // and configuration. Returns an error for unknown types or invalid URLs.
-func BuildInjectionSpec(typ, apiKey, baseURL string, headers map[string]string) (sandbox.InjectionSpec, error) {
+func BuildInjectionSpec(typ, apiKey, baseURL string, headers map[string]string) (sdk.InjectionSpec, error) {
 	switch strings.ToLower(strings.TrimSpace(typ)) {
 	case "openai":
-		return sandbox.InjectionSpec{
-			OpenAI: &sandbox.OpenAIInjection{APIKey: optionalString(apiKey), BaseURL: optionalString(baseURL)},
+		return sdk.InjectionSpec{
+			OpenAI: &sdk.OpenAIInjection{APIKey: optionalString(apiKey), BaseURL: optionalString(baseURL)},
 		}, nil
 	case "anthropic":
-		return sandbox.InjectionSpec{
-			Anthropic: &sandbox.AnthropicInjection{APIKey: optionalString(apiKey), BaseURL: optionalString(baseURL)},
+		return sdk.InjectionSpec{
+			Anthropic: &sdk.AnthropicInjection{APIKey: optionalString(apiKey), BaseURL: optionalString(baseURL)},
 		}, nil
 	case "gemini":
-		return sandbox.InjectionSpec{
-			Gemini: &sandbox.GeminiInjection{APIKey: optionalString(apiKey), BaseURL: optionalString(baseURL)},
+		return sdk.InjectionSpec{
+			Gemini: &sdk.GeminiInjection{APIKey: optionalString(apiKey), BaseURL: optionalString(baseURL)},
 		}, nil
 	case "http":
 		validated, err := validateBaseURL(baseURL, true)
 		if err != nil {
-			return sandbox.InjectionSpec{}, err
+			return sdk.InjectionSpec{}, err
 		}
-		http := &sandbox.HTTPInjection{BaseURL: validated}
+		http := &sdk.HTTPInjection{BaseURL: validated}
 		if len(headers) > 0 {
 			http.Headers = &headers
 		}
-		return sandbox.InjectionSpec{HTTP: http}, nil
+		return sdk.InjectionSpec{HTTP: http}, nil
 	case "":
-		return sandbox.InjectionSpec{}, fmt.Errorf("injection type is required and must be one of: %s", supportedInjectionTypes)
+		return sdk.InjectionSpec{}, fmt.Errorf("injection type is required and must be one of: %s", supportedInjectionTypes)
 	default:
-		return sandbox.InjectionSpec{}, fmt.Errorf("unsupported injection type %q, must be one of: %s", typ, supportedInjectionTypes)
+		return sdk.InjectionSpec{}, fmt.Errorf("unsupported injection type %q, must be one of: %s", typ, supportedInjectionTypes)
 	}
 }
 
 // BuildSandboxInjections combines rule-ID references and inline injection
 // specs into a single injection list, suitable for CreateParams.Injections.
 // Returns nil when both inputs are empty.
-func BuildSandboxInjections(ruleIDs, inlineSpecs []string) ([]sandbox.SandboxInjectionSpec, error) {
+func BuildSandboxInjections(ruleIDs, inlineSpecs []string) ([]sdk.SandboxInjectionSpec, error) {
 	if len(ruleIDs) == 0 && len(inlineSpecs) == 0 {
 		return nil, nil
 	}
-	out := make([]sandbox.SandboxInjectionSpec, 0, len(ruleIDs)+len(inlineSpecs))
+	out := make([]sdk.SandboxInjectionSpec, 0, len(ruleIDs)+len(inlineSpecs))
 	for _, id := range ruleIDs {
 		trimmed := strings.TrimSpace(id)
 		if trimmed == "" {
 			return nil, fmt.Errorf("injection rule ID cannot be empty")
 		}
-		out = append(out, sandbox.SandboxInjectionSpec{ByID: &trimmed})
+		out = append(out, sdk.SandboxInjectionSpec{ByID: &trimmed})
 	}
 	for _, raw := range inlineSpecs {
 		spec, err := parseInlineSandboxInjection(raw)
@@ -162,7 +162,7 @@ func BuildSandboxInjections(ruleIDs, inlineSpecs []string) ([]sandbox.SandboxInj
 // parseInlineSandboxInjection parses a single inline injection spec into a
 // SandboxInjectionSpec. The inline format is comma-separated "key=value"
 // pairs, with the "headers=" key taking the remainder of the string.
-func parseInlineSandboxInjection(raw string) (sandbox.SandboxInjectionSpec, error) {
+func parseInlineSandboxInjection(raw string) (sdk.SandboxInjectionSpec, error) {
 	fields := parseInlineInjectionFields(raw)
 	spec, err := BuildInjectionSpec(
 		fields["type"],
@@ -171,9 +171,9 @@ func parseInlineSandboxInjection(raw string) (sandbox.SandboxInjectionSpec, erro
 		ParseKeyValueMap(fields["headers"]),
 	)
 	if err != nil {
-		return sandbox.SandboxInjectionSpec{}, fmt.Errorf("invalid inline injection spec: %w", err)
+		return sdk.SandboxInjectionSpec{}, fmt.Errorf("invalid inline injection spec: %w", err)
 	}
-	return sandbox.SandboxInjectionSpec{
+	return sdk.SandboxInjectionSpec{
 		OpenAI:    spec.OpenAI,
 		Anthropic: spec.Anthropic,
 		Gemini:    spec.Gemini,

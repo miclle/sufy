@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package cli
+package sandbox
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/sufy-dev/sufy/cmd/sufy/internal/dockerfile"
-	"github.com/sufy-dev/sufy/sandbox"
+	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 
 // BuildInfo holds all parameters for the template build command.
@@ -59,7 +59,7 @@ func TemplateBuild(info BuildInfo) {
 			return
 		}
 
-		createParams := sandbox.CreateTemplateParams{
+		createParams := sdk.CreateTemplateParams{
 			Name: &info.Name,
 		}
 		if info.CPUCount > 0 {
@@ -103,7 +103,7 @@ func TemplateBuild(info BuildInfo) {
 			return
 		}
 
-		buildParams := sandbox.StartTemplateBuildParams{}
+		buildParams := sdk.StartTemplateBuildParams{}
 		if info.FromImage != "" {
 			buildParams.FromImage = &info.FromImage
 		}
@@ -141,7 +141,7 @@ func TemplateBuild(info BuildInfo) {
 
 	var cursor *int64
 	for {
-		logs, err := client.GetTemplateBuildLogs(ctx, templateID, buildID, &sandbox.GetBuildLogsParams{
+		logs, err := client.GetTemplateBuildLogs(ctx, templateID, buildID, &sdk.GetBuildLogsParams{
 			Cursor: cursor,
 		})
 		if err == nil && logs != nil {
@@ -189,7 +189,7 @@ func TemplateBuild(info BuildInfo) {
 
 // buildFromDockerfile handles the v2 Dockerfile build pipeline:
 // parse Dockerfile -> upload COPY files -> start build with steps.
-func buildFromDockerfile(ctx context.Context, client *sandbox.Client, templateID, buildID string, info BuildInfo) error {
+func buildFromDockerfile(ctx context.Context, client *sdk.Client, templateID, buildID string, info BuildInfo) error {
 	content, err := os.ReadFile(info.Dockerfile)
 	if err != nil {
 		return fmt.Errorf("read Dockerfile: %w", err)
@@ -242,7 +242,7 @@ func buildFromDockerfile(ctx context.Context, client *sandbox.Client, templateID
 		}
 	}
 
-	buildParams := sandbox.StartTemplateBuildParams{
+	buildParams := sdk.StartTemplateBuildParams{
 		FromImage: &result.BaseImage,
 		Steps:     &result.Steps,
 	}
@@ -282,7 +282,7 @@ func printSDKExamples(templateID string) {
 	fmt.Println("Template is ready! Use it with the SDK:")
 
 	fmt.Printf("\n%s\n", ColorInfo.Sprint("Go:"))
-	fmt.Printf("  sb, _ := client.CreateAndWait(ctx, sandbox.CreateParams{\n")
+	fmt.Printf("  sb, _ := client.CreateAndWait(ctx, sdk.CreateParams{\n")
 	fmt.Printf("      TemplateID: %q,\n", templateID)
 	fmt.Printf("  })\n")
 
