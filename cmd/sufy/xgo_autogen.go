@@ -6,7 +6,6 @@ import (
 	"github.com/goplus/cobra"
 	"github.com/goplus/cobra/xcmd"
 	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/ops"
 )
 
 const _ = true
@@ -37,6 +36,28 @@ type Cmd_sandbox_exec struct {
 	User       string `flag:"user, short: u, usage: user to run the command as"`
 }
 type Cmd_sandbox_injectionrule struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_injectionrule_create struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_injectionrule_delete struct {
+	xcmd.Command
+	*App
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select rules to delete"`
+}
+type Cmd_sandbox_injectionrule_get struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_injectionrule_list struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_injectionrule_update struct {
 	xcmd.Command
 	*App
 }
@@ -81,9 +102,47 @@ type Cmd_sandbox_resume struct {
 	All      bool   `flag:"all, short: a, usage: resume all paused sandboxes"`
 	Metadata string `flag:"metadata, short: m, usage: filter by metadata when using --all (key1=value1,key2=value2)"`
 }
+type Cmd_sandbox_template_build struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_template_builds struct {
+	xcmd.Command
+	*App
+}
 type Cmd_sandbox_template struct {
 	xcmd.Command
 	*App
+}
+type Cmd_sandbox_template_delete struct {
+	xcmd.Command
+	*App
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select templates to delete"`
+}
+type Cmd_sandbox_template_get struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_template_init struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_template_list struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_template_publish struct {
+	xcmd.Command
+	*App
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select templates"`
+}
+type Cmd_sandbox_template_unpublish struct {
+	xcmd.Command
+	*App
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select templates"`
 }
 //line cmd/sufy/main_app.gox:1
 func (this *App) MainEntry() {
@@ -98,14 +157,27 @@ func (this *App) Main() {
 	_xgo_obj2 := &Cmd_sandbox_create{App: this}
 	_xgo_obj3 := &Cmd_sandbox_exec{App: this}
 	_xgo_obj4 := &Cmd_sandbox_injectionrule{App: this}
-	_xgo_obj5 := &Cmd_sandbox_kill{App: this}
-	_xgo_obj6 := &Cmd_sandbox_list{App: this}
-	_xgo_obj7 := &Cmd_sandbox_logs{App: this}
-	_xgo_obj8 := &Cmd_sandbox_metrics{App: this}
-	_xgo_obj9 := &Cmd_sandbox_pause{App: this}
-	_xgo_obj10 := &Cmd_sandbox_resume{App: this}
-	_xgo_obj11 := &Cmd_sandbox_template{App: this}
-	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2, _xgo_obj3, _xgo_obj4, _xgo_obj5, _xgo_obj6, _xgo_obj7, _xgo_obj8, _xgo_obj9, _xgo_obj10, _xgo_obj11)
+	_xgo_obj5 := &Cmd_sandbox_injectionrule_create{App: this}
+	_xgo_obj6 := &Cmd_sandbox_injectionrule_delete{App: this}
+	_xgo_obj7 := &Cmd_sandbox_injectionrule_get{App: this}
+	_xgo_obj8 := &Cmd_sandbox_injectionrule_list{App: this}
+	_xgo_obj9 := &Cmd_sandbox_injectionrule_update{App: this}
+	_xgo_obj10 := &Cmd_sandbox_kill{App: this}
+	_xgo_obj11 := &Cmd_sandbox_list{App: this}
+	_xgo_obj12 := &Cmd_sandbox_logs{App: this}
+	_xgo_obj13 := &Cmd_sandbox_metrics{App: this}
+	_xgo_obj14 := &Cmd_sandbox_pause{App: this}
+	_xgo_obj15 := &Cmd_sandbox_resume{App: this}
+	_xgo_obj16 := &Cmd_sandbox_template_build{App: this}
+	_xgo_obj17 := &Cmd_sandbox_template_builds{App: this}
+	_xgo_obj18 := &Cmd_sandbox_template{App: this}
+	_xgo_obj19 := &Cmd_sandbox_template_delete{App: this}
+	_xgo_obj20 := &Cmd_sandbox_template_get{App: this}
+	_xgo_obj21 := &Cmd_sandbox_template_init{App: this}
+	_xgo_obj22 := &Cmd_sandbox_template_list{App: this}
+	_xgo_obj23 := &Cmd_sandbox_template_publish{App: this}
+	_xgo_obj24 := &Cmd_sandbox_template_unpublish{App: this}
+	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2, _xgo_obj3, _xgo_obj4, _xgo_obj5, _xgo_obj6, _xgo_obj7, _xgo_obj8, _xgo_obj9, _xgo_obj10, _xgo_obj11, _xgo_obj12, _xgo_obj13, _xgo_obj14, _xgo_obj15, _xgo_obj16, _xgo_obj17, _xgo_obj18, _xgo_obj19, _xgo_obj20, _xgo_obj21, _xgo_obj22, _xgo_obj23, _xgo_obj24)
 }
 //line cmd/sufy/sandbox_cmd.gox:1
 func (this *Cmd_sandbox) Main(_xgo_arg0 string) {
@@ -287,16 +359,16 @@ func (this *Cmd_sandbox_exec) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_exec) Classfname() string {
 	return "sandbox_exec"
 }
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:5
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:1
 func (this *Cmd_sandbox_injectionrule) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:5:1
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:1:1
 	this.Use("injection-rule")
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:7:1
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:3:1
 	this.Short("Manage sandbox injection rules (alias: ir)")
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:9:1
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:5:1
 	this.Command.Aliases = []string{"ir"}
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:11:1
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:7:1
 	this.Command.Example = `  # View injection-rule subcommands
   sufy sandbox injection-rule -h
   sufy sbx ir -h
@@ -312,16 +384,191 @@ func (this *Cmd_sandbox_injectionrule) Main(_xgo_arg0 string) {
   # Get injection rule details
   sufy sandbox injection-rule get rule-xxxxxxxxxxxx
   sufy sbx ir gt rule-xxxxxxxxxxxx`
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:27:1
-	ops.RegisterInjectionRuleChildren(&this.Command.Command)
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:29:1
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:23:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_injectionrule_cmd.gox:30:1
+//line cmd/sufy/sandbox_injectionrule_cmd.gox:24:1
 		this.Help()
 	})
 }
 func (this *Cmd_sandbox_injectionrule) Classfname() string {
 	return "sandbox_injectionrule"
+}
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:5
+func (this *Cmd_sandbox_injectionrule_create) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:5:1
+	this.Use("create")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:7:1
+	this.Short("Create an injection rule (alias: cr)")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:9:1
+	this.Command.Aliases = []string{"cr"}
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:11:1
+	this.Command.Example = `  # Create an OpenAI injection rule
+  sufy sandbox injection-rule create --name openai-default --type openai --api-key sk-xxx
+  sufy sbx ir cr --name openai-default --type openai --api-key sk-xxx
+
+  # Create an Anthropic injection rule with custom base URL
+  sufy sandbox injection-rule create --name anthropic-proxy --type anthropic --api-key sk-ant --base-url https://anthropic-proxy.example.com
+
+  # Create a custom HTTP injection rule
+  sufy sandbox injection-rule create --name api-auth --type http --base-url https://api.example.com --headers "Authorization=Bearer token123,X-Env=prod"`
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:21:1
+	var name, typ, apiKey, baseURL, headers string
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:22:1
+	this.Command.Flags().StringVar(&name, "name", "", "rule name (required, unique per user)")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:23:1
+	this.Command.Flags().StringVar(&typ, "type", "", "injection type: openai, anthropic, gemini, http")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:24:1
+	this.Command.Flags().StringVar(&apiKey, "api-key", "", "API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:25:1
+	this.Command.Flags().StringVar(&baseURL, "base-url", "", "override base URL or target base URL for http injection")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:26:1
+	this.Command.Flags().StringVar(&headers, "headers", "", "HTTP headers for custom http injection (comma-separated key=value pairs)")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:27:1
+	_ = this.Command.MarkFlagRequired("name")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:28:1
+	_ = this.Command.MarkFlagRequired("type")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:30:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:31:1
+		cli.InjectionRuleCreate(name, typ, apiKey, baseURL, headers)
+	})
+}
+func (this *Cmd_sandbox_injectionrule_create) Classfname() string {
+	return "sandbox_injectionrule_create"
+}
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:10
+func (this *Cmd_sandbox_injectionrule_delete) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:10:1
+	this.Use("delete [ruleIDs...]")
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:12:1
+	this.Short("Delete one or more injection rules (alias: dl)")
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:14:1
+	this.Command.Aliases = []string{"dl"}
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:16:1
+	this.Command.Example = `  # Delete a single rule (skip confirmation)
+  sufy sandbox injection-rule delete rule-xxxxxxxxxxxx -y
+  sufy sbx ir dl rule-xxxxxxxxxxxx -y
+
+  # Delete multiple rules
+  sufy sandbox injection-rule delete rule-aaa rule-bbb -y
+  sufy sbx ir dl rule-aaa rule-bbb -y
+
+  # Interactively select rules to delete
+  sufy sandbox injection-rule delete -s
+  sufy sbx ir dl -s`
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:28:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:29:1
+		if len(args) == 0 && !this.Sel {
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:30:1
+			this.Help()
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:31:1
+			return
+		}
+//line cmd/sufy/sandbox_injectionrule_delete_cmd.gox:33:1
+		cli.InjectionRuleDelete(args, this.Yes, this.Sel)
+	})
+}
+func (this *Cmd_sandbox_injectionrule_delete) Classfname() string {
+	return "sandbox_injectionrule_delete"
+}
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:6
+func (this *Cmd_sandbox_injectionrule_get) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:6:1
+	this.Use("get <ruleID>")
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:8:1
+	this.Short("Get injection rule details (alias: gt)")
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:10:1
+	this.Command.Aliases = []string{"gt"}
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:11:1
+	this.Command.Args = cobra.ExactArgs(1)
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:13:1
+	this.Command.Example = `  # Get injection rule details
+  sufy sandbox injection-rule get rule-xxxxxxxxxxxx
+  sufy sbx ir gt rule-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:17:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_injectionrule_get_cmd.gox:18:1
+		cli.InjectionRuleGet(args[0])
+	})
+}
+func (this *Cmd_sandbox_injectionrule_get) Classfname() string {
+	return "sandbox_injectionrule_get"
+}
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:5
+func (this *Cmd_sandbox_injectionrule_list) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:5:1
+	this.Use("list")
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:7:1
+	this.Short("List injection rules (alias: ls)")
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:9:1
+	this.Command.Aliases = []string{"ls"}
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:11:1
+	this.Command.Example = `  # List all injection rules
+  sufy sandbox injection-rule list
+  sufy sbx ir ls
+
+  # Output as JSON
+  sufy sandbox injection-rule list --format json
+  sufy sbx ir ls --format json`
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:19:1
+	var format string
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:20:1
+	this.Command.Flags().StringVar(&format, "format", "pretty", "output format: pretty or json")
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:22:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:23:1
+		cli.InjectionRuleList(format)
+	})
+}
+func (this *Cmd_sandbox_injectionrule_list) Classfname() string {
+	return "sandbox_injectionrule_list"
+}
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:6
+func (this *Cmd_sandbox_injectionrule_update) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:6:1
+	this.Use("update <ruleID>")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:8:1
+	this.Short("Update an injection rule (alias: up)")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:10:1
+	this.Command.Aliases = []string{"up"}
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:11:1
+	this.Command.Args = cobra.ExactArgs(1)
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:13:1
+	this.Command.Example = `  # Update rule name
+  sufy sandbox injection-rule update rule-xxxxxxxxxxxx --name new-name
+  sufy sbx ir up rule-xxxxxxxxxxxx --name new-name
+
+  # Update to a Gemini injection with custom base URL
+  sufy sandbox injection-rule update rule-xxxxxxxxxxxx --type gemini --api-key sk-gem --base-url https://gemini-proxy.example.com
+
+  # Update custom HTTP headers
+  sufy sandbox injection-rule update rule-xxxxxxxxxxxx --type http --base-url https://api.example.com --headers "Authorization=Bearer newtoken"`
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:23:1
+	var name, typ, apiKey, baseURL, headers string
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:24:1
+	this.Command.Flags().StringVar(&name, "name", "", "new rule name")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:25:1
+	this.Command.Flags().StringVar(&typ, "type", "", "new injection type: openai, anthropic, gemini, http")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:26:1
+	this.Command.Flags().StringVar(&apiKey, "api-key", "", "new API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:27:1
+	this.Command.Flags().StringVar(&baseURL, "base-url", "", "new base URL or target base URL for http injection")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:28:1
+	this.Command.Flags().StringVar(&headers, "headers", "", "new HTTP headers for custom http injection (comma-separated key=value pairs)")
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:30:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:31:1
+		cli.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
+	})
+}
+func (this *Cmd_sandbox_injectionrule_update) Classfname() string {
+	return "sandbox_injectionrule_update"
 }
 //line cmd/sufy/sandbox_kill_cmd.gox:11
 func (this *Cmd_sandbox_kill) Main(_xgo_arg0 string) {
@@ -549,16 +796,111 @@ func (this *Cmd_sandbox_resume) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_resume) Classfname() string {
 	return "sandbox_resume"
 }
-//line cmd/sufy/sandbox_template_cmd.gox:5
+//line cmd/sufy/sandbox_template_build_cmd.gox:5
+func (this *Cmd_sandbox_template_build) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_build_cmd.gox:5:1
+	this.Use("build")
+//line cmd/sufy/sandbox_template_build_cmd.gox:7:1
+	this.Short("Build a template (alias: bd)")
+//line cmd/sufy/sandbox_template_build_cmd.gox:9:1
+	this.Long(`Create a new template and build it, or rebuild an existing template.
+
+Supports three build modes:
+  1. --from-image: Build from a base Docker image
+  2. --from-template: Build from an existing template
+  3. --dockerfile: Build from a Dockerfile (v2 build system)`)
+//line cmd/sufy/sandbox_template_build_cmd.gox:16:1
+	this.Command.Aliases = []string{"bd"}
+//line cmd/sufy/sandbox_template_build_cmd.gox:18:1
+	this.Command.Example = `  # Create and build a new template from a Docker image
+  sufy sandbox template build --name my-template --from-image ubuntu:22.04 --wait
+  sufy sbx tpl bd --name my-template --from-image ubuntu:22.04 --wait
+
+  # Build from a Dockerfile
+  sufy sandbox template build --name my-template --dockerfile ./Dockerfile --wait
+  sufy sbx tpl bd --name my-template --dockerfile ./Dockerfile --wait
+
+  # Build from a Dockerfile with a custom context directory
+  sufy sandbox template build --name my-template --dockerfile ./Dockerfile --path ./context --wait
+  sufy sbx tpl bd --name my-template --dockerfile ./Dockerfile --path ./context --wait
+
+  # Rebuild an existing template
+  sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --from-image ubuntu:22.04
+  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --from-image ubuntu:22.04
+
+  # Force rebuild without cache
+  sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
+  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
+//line cmd/sufy/sandbox_template_build_cmd.gox:38:1
+	var info cli.BuildInfo
+//line cmd/sufy/sandbox_template_build_cmd.gox:39:1
+	this.Command.Flags().StringVar(&info.Name, "name", "", "template name (for creating a new template)")
+//line cmd/sufy/sandbox_template_build_cmd.gox:40:1
+	this.Command.Flags().StringVar(&info.TemplateID, "template-id", "", "existing template ID (for rebuilding)")
+//line cmd/sufy/sandbox_template_build_cmd.gox:41:1
+	this.Command.Flags().StringVar(&info.FromImage, "from-image", "", "base Docker image")
+//line cmd/sufy/sandbox_template_build_cmd.gox:42:1
+	this.Command.Flags().StringVar(&info.FromTemplate, "from-template", "", "base template")
+//line cmd/sufy/sandbox_template_build_cmd.gox:43:1
+	this.Command.Flags().StringVar(&info.StartCmd, "start-cmd", "", "command to run after build")
+//line cmd/sufy/sandbox_template_build_cmd.gox:44:1
+	this.Command.Flags().StringVar(&info.ReadyCmd, "ready-cmd", "", "readiness check command")
+//line cmd/sufy/sandbox_template_build_cmd.gox:45:1
+	this.Command.Flags().Int32Var(&info.CPUCount, "cpu", 0, "sandbox CPU count")
+//line cmd/sufy/sandbox_template_build_cmd.gox:46:1
+	this.Command.Flags().Int32Var(&info.MemoryMB, "memory", 0, "sandbox memory size in MiB")
+//line cmd/sufy/sandbox_template_build_cmd.gox:47:1
+	this.Command.Flags().BoolVar(&info.Wait, "wait", false, "wait for build to complete")
+//line cmd/sufy/sandbox_template_build_cmd.gox:48:1
+	this.Command.Flags().BoolVar(&info.NoCache, "no-cache", false, "force full rebuild ignoring cache")
+//line cmd/sufy/sandbox_template_build_cmd.gox:49:1
+	this.Command.Flags().StringVar(&info.Dockerfile, "dockerfile", "", "path to Dockerfile (enables v2 build)")
+//line cmd/sufy/sandbox_template_build_cmd.gox:50:1
+	this.Command.Flags().StringVar(&info.Path, "path", "", "build context directory (defaults to Dockerfile's parent)")
+//line cmd/sufy/sandbox_template_build_cmd.gox:52:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_build_cmd.gox:53:1
+		cli.TemplateBuild(info)
+	})
+}
+func (this *Cmd_sandbox_template_build) Classfname() string {
+	return "sandbox_template_build"
+}
+//line cmd/sufy/sandbox_template_builds_cmd.gox:6
+func (this *Cmd_sandbox_template_builds) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_builds_cmd.gox:6:1
+	this.Use("builds <templateID> <buildID>")
+//line cmd/sufy/sandbox_template_builds_cmd.gox:8:1
+	this.Short("View template build status (alias: bds)")
+//line cmd/sufy/sandbox_template_builds_cmd.gox:10:1
+	this.Command.Aliases = []string{"bds"}
+//line cmd/sufy/sandbox_template_builds_cmd.gox:11:1
+	this.Command.Args = cobra.ExactArgs(2)
+//line cmd/sufy/sandbox_template_builds_cmd.gox:13:1
+	this.Command.Example = `  # View build status
+  sufy sandbox template builds tmpl-xxxxxxxxxxxx build-xxxxxxxxxxxx
+  sufy sbx tpl bds tmpl-xxxxxxxxxxxx build-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_template_builds_cmd.gox:17:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_template_builds_cmd.gox:18:1
+		cli.TemplateBuilds(args[0], args[1])
+	})
+}
+func (this *Cmd_sandbox_template_builds) Classfname() string {
+	return "sandbox_template_builds"
+}
+//line cmd/sufy/sandbox_template_cmd.gox:1
 func (this *Cmd_sandbox_template) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_template_cmd.gox:5:1
+//line cmd/sufy/sandbox_template_cmd.gox:1:1
 	this.Use("template")
-//line cmd/sufy/sandbox_template_cmd.gox:7:1
+//line cmd/sufy/sandbox_template_cmd.gox:3:1
 	this.Short("Manage sandbox templates (alias: tpl)")
-//line cmd/sufy/sandbox_template_cmd.gox:9:1
+//line cmd/sufy/sandbox_template_cmd.gox:5:1
 	this.Command.Aliases = []string{"tpl"}
-//line cmd/sufy/sandbox_template_cmd.gox:11:1
+//line cmd/sufy/sandbox_template_cmd.gox:7:1
 	this.Command.Example = `  # View template subcommands
   sufy sandbox template -h
   sufy sbx tpl -h
@@ -574,16 +916,211 @@ func (this *Cmd_sandbox_template) Main(_xgo_arg0 string) {
   # Get template details
   sufy sandbox template get tmpl-xxxxxxxxxxxx
   sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
-//line cmd/sufy/sandbox_template_cmd.gox:27:1
-	ops.RegisterTemplateChildren(&this.Command.Command)
-//line cmd/sufy/sandbox_template_cmd.gox:29:1
+//line cmd/sufy/sandbox_template_cmd.gox:23:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_template_cmd.gox:30:1
+//line cmd/sufy/sandbox_template_cmd.gox:24:1
 		this.Help()
 	})
 }
 func (this *Cmd_sandbox_template) Classfname() string {
 	return "sandbox_template"
+}
+//line cmd/sufy/sandbox_template_delete_cmd.gox:10
+func (this *Cmd_sandbox_template_delete) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_delete_cmd.gox:10:1
+	this.Use("delete [templateIDs...]")
+//line cmd/sufy/sandbox_template_delete_cmd.gox:12:1
+	this.Short("Delete one or more templates (alias: dl)")
+//line cmd/sufy/sandbox_template_delete_cmd.gox:14:1
+	this.Command.Aliases = []string{"dl"}
+//line cmd/sufy/sandbox_template_delete_cmd.gox:16:1
+	this.Command.Example = `  # Delete a single template (skip confirmation)
+  sufy sandbox template delete tmpl-xxxxxxxxxxxx -y
+  sufy sbx tpl dl tmpl-xxxxxxxxxxxx -y
+
+  # Delete multiple templates
+  sufy sandbox template delete tmpl-aaa tmpl-bbb -y
+  sufy sbx tpl dl tmpl-aaa tmpl-bbb -y
+
+  # Interactively select templates to delete
+  sufy sandbox template delete -s
+  sufy sbx tpl dl -s`
+//line cmd/sufy/sandbox_template_delete_cmd.gox:28:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_template_delete_cmd.gox:29:1
+		if len(args) == 0 && !this.Sel {
+//line cmd/sufy/sandbox_template_delete_cmd.gox:30:1
+			this.Help()
+//line cmd/sufy/sandbox_template_delete_cmd.gox:31:1
+			return
+		}
+//line cmd/sufy/sandbox_template_delete_cmd.gox:33:1
+		cli.TemplateDelete(args, this.Yes, this.Sel)
+	})
+}
+func (this *Cmd_sandbox_template_delete) Classfname() string {
+	return "sandbox_template_delete"
+}
+//line cmd/sufy/sandbox_template_get_cmd.gox:6
+func (this *Cmd_sandbox_template_get) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_get_cmd.gox:6:1
+	this.Use("get <templateID>")
+//line cmd/sufy/sandbox_template_get_cmd.gox:8:1
+	this.Short("Get template details (alias: gt)")
+//line cmd/sufy/sandbox_template_get_cmd.gox:10:1
+	this.Command.Aliases = []string{"gt"}
+//line cmd/sufy/sandbox_template_get_cmd.gox:11:1
+	this.Command.Args = cobra.ExactArgs(1)
+//line cmd/sufy/sandbox_template_get_cmd.gox:13:1
+	this.Command.Example = `  # Get template details
+  sufy sandbox template get tmpl-xxxxxxxxxxxx
+  sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
+//line cmd/sufy/sandbox_template_get_cmd.gox:17:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_template_get_cmd.gox:18:1
+		cli.TemplateGet(args[0])
+	})
+}
+func (this *Cmd_sandbox_template_get) Classfname() string {
+	return "sandbox_template_get"
+}
+//line cmd/sufy/sandbox_template_init_cmd.gox:5
+func (this *Cmd_sandbox_template_init) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_init_cmd.gox:5:1
+	this.Use("init")
+//line cmd/sufy/sandbox_template_init_cmd.gox:7:1
+	this.Short("Initialize a new template project (alias: it)")
+//line cmd/sufy/sandbox_template_init_cmd.gox:9:1
+	this.Long("Scaffold a new template project with boilerplate files for the selected language.")
+//line cmd/sufy/sandbox_template_init_cmd.gox:11:1
+	this.Command.Aliases = []string{"it"}
+//line cmd/sufy/sandbox_template_init_cmd.gox:13:1
+	this.Command.Example = `  # Interactive mode
+  sufy sandbox template init
+  sufy sbx tpl it
+
+  # Non-interactive mode
+  sufy sandbox template init --name my-template --language go
+  sufy sbx tpl it --name my-template --language go
+
+  # Non-interactive mode with custom path
+  sufy sandbox template init --name my-api --language typescript --path ./my-api
+  sufy sbx tpl it --name my-api --language typescript --path ./my-api`
+//line cmd/sufy/sandbox_template_init_cmd.gox:25:1
+	var info cli.InitInfo
+//line cmd/sufy/sandbox_template_init_cmd.gox:26:1
+	this.Command.Flags().StringVar(&info.Name, "name", "", "template project name")
+//line cmd/sufy/sandbox_template_init_cmd.gox:27:1
+	this.Command.Flags().StringVar(&info.Language, "language", "", "programming language (go, typescript, python)")
+//line cmd/sufy/sandbox_template_init_cmd.gox:28:1
+	this.Command.Flags().StringVar(&info.Path, "path", "", "output directory (defaults to ./<name>)")
+//line cmd/sufy/sandbox_template_init_cmd.gox:30:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_init_cmd.gox:31:1
+		cli.TemplateInit(info)
+	})
+}
+func (this *Cmd_sandbox_template_init) Classfname() string {
+	return "sandbox_template_init"
+}
+//line cmd/sufy/sandbox_template_list_cmd.gox:5
+func (this *Cmd_sandbox_template_list) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_list_cmd.gox:5:1
+	this.Use("list")
+//line cmd/sufy/sandbox_template_list_cmd.gox:7:1
+	this.Short("List sandbox templates (alias: ls)")
+//line cmd/sufy/sandbox_template_list_cmd.gox:9:1
+	this.Command.Aliases = []string{"ls"}
+//line cmd/sufy/sandbox_template_list_cmd.gox:11:1
+	this.Command.Example = `  # List all templates
+  sufy sandbox template list
+  sufy sbx tpl ls
+
+  # Output as JSON
+  sufy sandbox template list --format json
+  sufy sbx tpl ls --format json`
+//line cmd/sufy/sandbox_template_list_cmd.gox:19:1
+	var format string
+//line cmd/sufy/sandbox_template_list_cmd.gox:20:1
+	this.Command.Flags().StringVar(&format, "format", "pretty", "output format: pretty or json")
+//line cmd/sufy/sandbox_template_list_cmd.gox:22:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_list_cmd.gox:23:1
+		cli.TemplateList(format)
+	})
+}
+func (this *Cmd_sandbox_template_list) Classfname() string {
+	return "sandbox_template_list"
+}
+//line cmd/sufy/sandbox_template_publish_cmd.gox:10
+func (this *Cmd_sandbox_template_publish) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_publish_cmd.gox:10:1
+	this.Use("publish [templateIDs...]")
+//line cmd/sufy/sandbox_template_publish_cmd.gox:12:1
+	this.Short("Publish templates (make public) (alias: pb)")
+//line cmd/sufy/sandbox_template_publish_cmd.gox:14:1
+	this.Command.Aliases = []string{"pb"}
+//line cmd/sufy/sandbox_template_publish_cmd.gox:16:1
+	this.Command.Example = `  # Publish a single template (skip confirmation)
+  sufy sandbox template publish tmpl-xxxxxxxxxxxx -y
+  sufy sbx tpl pb tmpl-xxxxxxxxxxxx -y
+
+  # Interactively select templates to publish
+  sufy sandbox template publish -s
+  sufy sbx tpl pb -s`
+//line cmd/sufy/sandbox_template_publish_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_template_publish_cmd.gox:25:1
+		if len(args) == 0 && !this.Sel {
+//line cmd/sufy/sandbox_template_publish_cmd.gox:26:1
+			this.Help()
+//line cmd/sufy/sandbox_template_publish_cmd.gox:27:1
+			return
+		}
+//line cmd/sufy/sandbox_template_publish_cmd.gox:29:1
+		cli.TemplateSetPublic(args, true, this.Yes, this.Sel, "publish")
+	})
+}
+func (this *Cmd_sandbox_template_publish) Classfname() string {
+	return "sandbox_template_publish"
+}
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:10
+func (this *Cmd_sandbox_template_unpublish) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:10:1
+	this.Use("unpublish [templateIDs...]")
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:12:1
+	this.Short("Unpublish templates (make private) (alias: upb)")
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:14:1
+	this.Command.Aliases = []string{"upb"}
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:16:1
+	this.Command.Example = `  # Unpublish a single template (skip confirmation)
+  sufy sandbox template unpublish tmpl-xxxxxxxxxxxx -y
+  sufy sbx tpl upb tmpl-xxxxxxxxxxxx -y
+
+  # Interactively select templates to unpublish
+  sufy sandbox template unpublish -s
+  sufy sbx tpl upb -s`
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:24:1
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:25:1
+		if len(args) == 0 && !this.Sel {
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:26:1
+			this.Help()
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:27:1
+			return
+		}
+//line cmd/sufy/sandbox_template_unpublish_cmd.gox:29:1
+		cli.TemplateSetPublic(args, false, this.Yes, this.Sel, "unpublish")
+	})
+}
+func (this *Cmd_sandbox_template_unpublish) Classfname() string {
+	return "sandbox_template_unpublish"
 }
 func main() {
 	new(App).Main()

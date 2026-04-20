@@ -1,0 +1,54 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "build"
+
+short "Build a template (alias: bd)"
+
+long `Create a new template and build it, or rebuild an existing template.
+
+Supports three build modes:
+  1. --from-image: Build from a base Docker image
+  2. --from-template: Build from an existing template
+  3. --dockerfile: Build from a Dockerfile (v2 build system)`
+
+this.Command.Aliases = []string{"bd"}
+
+this.Command.Example = `  # Create and build a new template from a Docker image
+  sufy sandbox template build --name my-template --from-image ubuntu:22.04 --wait
+  sufy sbx tpl bd --name my-template --from-image ubuntu:22.04 --wait
+
+  # Build from a Dockerfile
+  sufy sandbox template build --name my-template --dockerfile ./Dockerfile --wait
+  sufy sbx tpl bd --name my-template --dockerfile ./Dockerfile --wait
+
+  # Build from a Dockerfile with a custom context directory
+  sufy sandbox template build --name my-template --dockerfile ./Dockerfile --path ./context --wait
+  sufy sbx tpl bd --name my-template --dockerfile ./Dockerfile --path ./context --wait
+
+  # Rebuild an existing template
+  sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --from-image ubuntu:22.04
+  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --from-image ubuntu:22.04
+
+  # Force rebuild without cache
+  sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
+  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
+
+var info cli.BuildInfo
+this.Command.Flags().StringVar(&info.Name, "name", "", "template name (for creating a new template)")
+this.Command.Flags().StringVar(&info.TemplateID, "template-id", "", "existing template ID (for rebuilding)")
+this.Command.Flags().StringVar(&info.FromImage, "from-image", "", "base Docker image")
+this.Command.Flags().StringVar(&info.FromTemplate, "from-template", "", "base template")
+this.Command.Flags().StringVar(&info.StartCmd, "start-cmd", "", "command to run after build")
+this.Command.Flags().StringVar(&info.ReadyCmd, "ready-cmd", "", "readiness check command")
+this.Command.Flags().Int32Var(&info.CPUCount, "cpu", 0, "sandbox CPU count")
+this.Command.Flags().Int32Var(&info.MemoryMB, "memory", 0, "sandbox memory size in MiB")
+this.Command.Flags().BoolVar(&info.Wait, "wait", false, "wait for build to complete")
+this.Command.Flags().BoolVar(&info.NoCache, "no-cache", false, "force full rebuild ignoring cache")
+this.Command.Flags().StringVar(&info.Dockerfile, "dockerfile", "", "path to Dockerfile (enables v2 build)")
+this.Command.Flags().StringVar(&info.Path, "path", "", "build context directory (defaults to Dockerfile's parent)")
+
+run => {
+	cli.TemplateBuild(info)
+}

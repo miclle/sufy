@@ -1,0 +1,32 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "init"
+
+short "Initialize a new template project (alias: it)"
+
+long "Scaffold a new template project with boilerplate files for the selected language."
+
+this.Command.Aliases = []string{"it"}
+
+this.Command.Example = `  # Interactive mode
+  sufy sandbox template init
+  sufy sbx tpl it
+
+  # Non-interactive mode
+  sufy sandbox template init --name my-template --language go
+  sufy sbx tpl it --name my-template --language go
+
+  # Non-interactive mode with custom path
+  sufy sandbox template init --name my-api --language typescript --path ./my-api
+  sufy sbx tpl it --name my-api --language typescript --path ./my-api`
+
+var info cli.InitInfo
+this.Command.Flags().StringVar(&info.Name, "name", "", "template project name")
+this.Command.Flags().StringVar(&info.Language, "language", "", "programming language (go, typescript, python)")
+this.Command.Flags().StringVar(&info.Path, "path", "", "output directory (defaults to ./<name>)")
+
+run => {
+	cli.TemplateInit(info)
+}

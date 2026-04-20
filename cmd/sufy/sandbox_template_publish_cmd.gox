@@ -1,0 +1,30 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select templates"`
+)
+
+use "publish [templateIDs...]"
+
+short "Publish templates (make public) (alias: pb)"
+
+this.Command.Aliases = []string{"pb"}
+
+this.Command.Example = `  # Publish a single template (skip confirmation)
+  sufy sandbox template publish tmpl-xxxxxxxxxxxx -y
+  sufy sbx tpl pb tmpl-xxxxxxxxxxxx -y
+
+  # Interactively select templates to publish
+  sufy sandbox template publish -s
+  sufy sbx tpl pb -s`
+
+run args => {
+	if len(args) == 0 && !Sel {
+		help
+		return
+	}
+	cli.TemplateSetPublic(args, true, Yes, Sel, "publish")
+}

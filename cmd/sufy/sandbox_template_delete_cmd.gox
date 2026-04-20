@@ -1,0 +1,34 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select templates to delete"`
+)
+
+use "delete [templateIDs...]"
+
+short "Delete one or more templates (alias: dl)"
+
+this.Command.Aliases = []string{"dl"}
+
+this.Command.Example = `  # Delete a single template (skip confirmation)
+  sufy sandbox template delete tmpl-xxxxxxxxxxxx -y
+  sufy sbx tpl dl tmpl-xxxxxxxxxxxx -y
+
+  # Delete multiple templates
+  sufy sandbox template delete tmpl-aaa tmpl-bbb -y
+  sufy sbx tpl dl tmpl-aaa tmpl-bbb -y
+
+  # Interactively select templates to delete
+  sufy sandbox template delete -s
+  sufy sbx tpl dl -s`
+
+run args => {
+	if len(args) == 0 && !Sel {
+		help
+		return
+	}
+	cli.TemplateDelete(args, Yes, Sel)
+}

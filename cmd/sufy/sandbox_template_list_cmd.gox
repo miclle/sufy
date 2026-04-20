@@ -1,0 +1,24 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "list"
+
+short "List sandbox templates (alias: ls)"
+
+this.Command.Aliases = []string{"ls"}
+
+this.Command.Example = `  # List all templates
+  sufy sandbox template list
+  sufy sbx tpl ls
+
+  # Output as JSON
+  sufy sandbox template list --format json
+  sufy sbx tpl ls --format json`
+
+var format string
+this.Command.Flags().StringVar(&format, "format", "pretty", "output format: pretty or json")
+
+run => {
+	cli.TemplateList(format)
+}

@@ -1,0 +1,32 @@
+import (
+	"github.com/goplus/cobra"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "update <ruleID>"
+
+short "Update an injection rule (alias: up)"
+
+this.Command.Aliases = []string{"up"}
+this.Command.Args = cobra.ExactArgs(1)
+
+this.Command.Example = `  # Update rule name
+  sufy sandbox injection-rule update rule-xxxxxxxxxxxx --name new-name
+  sufy sbx ir up rule-xxxxxxxxxxxx --name new-name
+
+  # Update to a Gemini injection with custom base URL
+  sufy sandbox injection-rule update rule-xxxxxxxxxxxx --type gemini --api-key sk-gem --base-url https://gemini-proxy.example.com
+
+  # Update custom HTTP headers
+  sufy sandbox injection-rule update rule-xxxxxxxxxxxx --type http --base-url https://api.example.com --headers "Authorization=Bearer newtoken"`
+
+var name, typ, apiKey, baseURL, headers string
+this.Command.Flags().StringVar(&name, "name", "", "new rule name")
+this.Command.Flags().StringVar(&typ, "type", "", "new injection type: openai, anthropic, gemini, http")
+this.Command.Flags().StringVar(&apiKey, "api-key", "", "new API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)")
+this.Command.Flags().StringVar(&baseURL, "base-url", "", "new base URL or target base URL for http injection")
+this.Command.Flags().StringVar(&headers, "headers", "", "new HTTP headers for custom http injection (comma-separated key=value pairs)")
+
+run args => {
+	cli.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
+}

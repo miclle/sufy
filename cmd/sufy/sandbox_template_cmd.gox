@@ -1,7 +1,3 @@
-import (
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/ops"
-)
-
 use "template"
 
 short "Manage sandbox templates (alias: tpl)"
@@ -23,8 +19,6 @@ this.Command.Example = `  # View template subcommands
   # Get template details
   sufy sandbox template get tmpl-xxxxxxxxxxxx
   sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
-
-ops.RegisterTemplateChildren(&this.Command.Command)
 
 run => {
 	help

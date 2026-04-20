@@ -1,0 +1,19 @@
+import (
+	"github.com/goplus/cobra"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "get <ruleID>"
+
+short "Get injection rule details (alias: gt)"
+
+this.Command.Aliases = []string{"gt"}
+this.Command.Args = cobra.ExactArgs(1)
+
+this.Command.Example = `  # Get injection rule details
+  sufy sandbox injection-rule get rule-xxxxxxxxxxxx
+  sufy sbx ir gt rule-xxxxxxxxxxxx`
+
+run args => {
+	cli.InjectionRuleGet(args[0])
+}

@@ -1,0 +1,34 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select rules to delete"`
+)
+
+use "delete [ruleIDs...]"
+
+short "Delete one or more injection rules (alias: dl)"
+
+this.Command.Aliases = []string{"dl"}
+
+this.Command.Example = `  # Delete a single rule (skip confirmation)
+  sufy sandbox injection-rule delete rule-xxxxxxxxxxxx -y
+  sufy sbx ir dl rule-xxxxxxxxxxxx -y
+
+  # Delete multiple rules
+  sufy sandbox injection-rule delete rule-aaa rule-bbb -y
+  sufy sbx ir dl rule-aaa rule-bbb -y
+
+  # Interactively select rules to delete
+  sufy sandbox injection-rule delete -s
+  sufy sbx ir dl -s`
+
+run args => {
+	if len(args) == 0 && !Sel {
+		help
+		return
+	}
+	cli.InjectionRuleDelete(args, Yes, Sel)
+}

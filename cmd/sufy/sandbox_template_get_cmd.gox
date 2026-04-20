@@ -1,0 +1,19 @@
+import (
+	"github.com/goplus/cobra"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "get <templateID>"
+
+short "Get template details (alias: gt)"
+
+this.Command.Aliases = []string{"gt"}
+this.Command.Args = cobra.ExactArgs(1)
+
+this.Command.Example = `  # Get template details
+  sufy sandbox template get tmpl-xxxxxxxxxxxx
+  sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
+
+run args => {
+	cli.TemplateGet(args[0])
+}

@@ -1,0 +1,30 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+var (
+	Yes bool `flag:"yes, short: y, usage: skip confirmation"`
+	Sel bool `flag:"select, short: s, usage: interactively select templates"`
+)
+
+use "unpublish [templateIDs...]"
+
+short "Unpublish templates (make private) (alias: upb)"
+
+this.Command.Aliases = []string{"upb"}
+
+this.Command.Example = `  # Unpublish a single template (skip confirmation)
+  sufy sandbox template unpublish tmpl-xxxxxxxxxxxx -y
+  sufy sbx tpl upb tmpl-xxxxxxxxxxxx -y
+
+  # Interactively select templates to unpublish
+  sufy sandbox template unpublish -s
+  sufy sbx tpl upb -s`
+
+run args => {
+	if len(args) == 0 && !Sel {
+		help
+		return
+	}
+	cli.TemplateSetPublic(args, false, Yes, Sel, "unpublish")
+}

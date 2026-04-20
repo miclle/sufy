@@ -1,0 +1,19 @@
+import (
+	"github.com/goplus/cobra"
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/cli"
+)
+
+use "builds <templateID> <buildID>"
+
+short "View template build status (alias: bds)"
+
+this.Command.Aliases = []string{"bds"}
+this.Command.Args = cobra.ExactArgs(2)
+
+this.Command.Example = `  # View build status
+  sufy sandbox template builds tmpl-xxxxxxxxxxxx build-xxxxxxxxxxxx
+  sufy sbx tpl bds tmpl-xxxxxxxxxxxx build-xxxxxxxxxxxx`
+
+run args => {
+	cli.TemplateBuilds(args[0], args[1])
+}
