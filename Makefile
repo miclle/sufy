@@ -26,18 +26,18 @@ clean:
 
 test:
 	go test -tags=unit -failfast -count=1 -v -timeout 30m -coverprofile=coverage.txt \
-		$$(go list ./... | grep -v 'examples\|cmd')
+		$$(go list ./... | grep -v 'examples')
 
 unittest:
 	go test -tags=unit -failfast -count=1 -v -coverprofile=coverage.txt \
-		$$(go list ./... | grep -v 'examples\|cmd')
+		$$(go list ./... | grep -v 'examples')
 
 integrationtest:
 	go test -tags=integration -failfast -count=1 -parallel 1 -v -coverprofile=coverage.txt \
-		$$(go list ./... | grep -v 'examples\|cmd')
+		$$(go list ./... | grep -v 'examples')
 
 staticcheck:
-	staticcheck $$(go list ./... | grep -v 'examples\|cmd')
+	staticcheck $$(go list ./... | grep -v 'examples')
 
 generate: generate-sandbox
 
