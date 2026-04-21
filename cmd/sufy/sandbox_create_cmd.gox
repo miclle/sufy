@@ -1,6 +1,6 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
+	"github.com/sufy-dev/sufy/cmd/internal/sandbox"
 )
 
 var (

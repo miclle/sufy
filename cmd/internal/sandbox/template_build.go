@@ -24,7 +24,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/dockerfile"
+	"github.com/sufy-dev/sufy/cmd/internal/dockerfile"
 	sdk "github.com/sufy-dev/sufy/sandbox"
 )
 

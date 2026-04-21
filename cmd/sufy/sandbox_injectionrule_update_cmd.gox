@@ -1,6 +1,14 @@
 import (
 	"github.com/goplus/cobra"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
+	"github.com/sufy-dev/sufy/cmd/internal/sandbox"
+)
+
+var (
+	Name    string `flag:"name, usage: new rule name"`
+	Type    string `flag:"type, usage: new injection type: openai, anthropic, gemini, http"`
+	APIKey  string `flag:"api-key, usage: new API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)"`
+	BaseURL string `flag:"base-url, usage: new base URL or target base URL for http injection"`
+	Headers string `flag:"headers, usage: new HTTP headers for custom http injection (comma-separated key=value pairs)"`
 )
 
 use "update <ruleID>"
@@ -20,13 +28,6 @@ this.Command.Example = `  # Update rule name
   # Update custom HTTP headers
   sufy sandbox injection-rule update rule-xxxxxxxxxxxx --type http --base-url https://api.example.com --headers "Authorization=Bearer newtoken"`
 
-var name, typ, apiKey, baseURL, headers string
-this.Command.Flags().StringVar(&name, "name", "", "new rule name")
-this.Command.Flags().StringVar(&typ, "type", "", "new injection type: openai, anthropic, gemini, http")
-this.Command.Flags().StringVar(&apiKey, "api-key", "", "new API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)")
-this.Command.Flags().StringVar(&baseURL, "base-url", "", "new base URL or target base URL for http injection")
-this.Command.Flags().StringVar(&headers, "headers", "", "new HTTP headers for custom http injection (comma-separated key=value pairs)")
-
 run args => {
-	sandbox.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
+	sandbox.InjectionRuleUpdate(args[0], Name, Type, APIKey, BaseURL, Headers)
 }

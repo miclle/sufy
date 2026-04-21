@@ -5,7 +5,7 @@ package main
 import (
 	"github.com/goplus/cobra"
 	"github.com/goplus/cobra/xcmd"
-	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
+	"github.com/sufy-dev/sufy/cmd/internal/sandbox"
 )
 
 const _ = true
@@ -42,6 +42,11 @@ type Cmd_sandbox_injectionrule struct {
 type Cmd_sandbox_injectionrule_create struct {
 	xcmd.Command
 	*App
+	Name    string `flag:"name, usage: rule name (required, unique per user)"`
+	Type    string `flag:"type, usage: injection type: openai, anthropic, gemini, http"`
+	APIKey  string `flag:"api-key, usage: API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)"`
+	BaseURL string `flag:"base-url, usage: override base URL or target base URL for http injection"`
+	Headers string `flag:"headers, usage: HTTP headers for custom http injection (comma-separated key=value pairs)"`
 }
 type Cmd_sandbox_injectionrule_delete struct {
 	xcmd.Command
@@ -56,10 +61,16 @@ type Cmd_sandbox_injectionrule_get struct {
 type Cmd_sandbox_injectionrule_list struct {
 	xcmd.Command
 	*App
+	Format string `flag:"format, val: pretty, usage: output format: pretty or json"`
 }
 type Cmd_sandbox_injectionrule_update struct {
 	xcmd.Command
 	*App
+	Name    string `flag:"name, usage: new rule name"`
+	Type    string `flag:"type, usage: new injection type: openai, anthropic, gemini, http"`
+	APIKey  string `flag:"api-key, usage: new API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)"`
+	BaseURL string `flag:"base-url, usage: new base URL or target base URL for http injection"`
+	Headers string `flag:"headers, usage: new HTTP headers for custom http injection (comma-separated key=value pairs)"`
 }
 type Cmd_sandbox_kill struct {
 	xcmd.Command
@@ -131,6 +142,7 @@ type Cmd_sandbox_template_init struct {
 type Cmd_sandbox_template_list struct {
 	xcmd.Command
 	*App
+	Format string `flag:"format, val: pretty, usage: output format: pretty or json"`
 }
 type Cmd_sandbox_template_publish struct {
 	xcmd.Command
@@ -393,16 +405,16 @@ func (this *Cmd_sandbox_injectionrule) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_injectionrule) Classfname() string {
 	return "sandbox_injectionrule"
 }
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:5
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:13
 func (this *Cmd_sandbox_injectionrule_create) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:5:1
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:13:1
 	this.Use("create")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:7:1
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:15:1
 	this.Short("Create an injection rule (alias: cr)")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:9:1
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:17:1
 	this.Command.Aliases = []string{"cr"}
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:11:1
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:19:1
 	this.Command.Example = `  # Create an OpenAI injection rule
   sufy sandbox injection-rule create --name openai-default --type openai --api-key sk-xxx
   sufy sbx ir cr --name openai-default --type openai --api-key sk-xxx
@@ -412,26 +424,14 @@ func (this *Cmd_sandbox_injectionrule_create) Main(_xgo_arg0 string) {
 
   # Create a custom HTTP injection rule
   sufy sandbox injection-rule create --name api-auth --type http --base-url https://api.example.com --headers "Authorization=Bearer token123,X-Env=prod"`
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:21:1
-	var name, typ, apiKey, baseURL, headers string
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:22:1
-	this.Command.Flags().StringVar(&name, "name", "", "rule name (required, unique per user)")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:23:1
-	this.Command.Flags().StringVar(&typ, "type", "", "injection type: openai, anthropic, gemini, http")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:24:1
-	this.Command.Flags().StringVar(&apiKey, "api-key", "", "API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:25:1
-	this.Command.Flags().StringVar(&baseURL, "base-url", "", "override base URL or target base URL for http injection")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:26:1
-	this.Command.Flags().StringVar(&headers, "headers", "", "HTTP headers for custom http injection (comma-separated key=value pairs)")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:27:1
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:29:1
 	_ = this.Command.MarkFlagRequired("name")
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:28:1
-	_ = this.Command.MarkFlagRequired("type")
 //line cmd/sufy/sandbox_injectionrule_create_cmd.gox:30:1
+	_ = this.Command.MarkFlagRequired("type")
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:32:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:31:1
-		sandbox.InjectionRuleCreate(name, typ, apiKey, baseURL, headers)
+//line cmd/sufy/sandbox_injectionrule_create_cmd.gox:33:1
+		sandbox.InjectionRuleCreate(this.Name, this.Type, this.APIKey, this.BaseURL, this.Headers)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_create) Classfname() string {
@@ -498,16 +498,16 @@ func (this *Cmd_sandbox_injectionrule_get) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_injectionrule_get) Classfname() string {
 	return "sandbox_injectionrule_get"
 }
-//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:5
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:9
 func (this *Cmd_sandbox_injectionrule_list) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:5:1
-	this.Use("list")
-//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:7:1
-	this.Short("List injection rules (alias: ls)")
 //line cmd/sufy/sandbox_injectionrule_list_cmd.gox:9:1
-	this.Command.Aliases = []string{"ls"}
+	this.Use("list")
 //line cmd/sufy/sandbox_injectionrule_list_cmd.gox:11:1
+	this.Short("List injection rules (alias: ls)")
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:13:1
+	this.Command.Aliases = []string{"ls"}
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:15:1
 	this.Command.Example = `  # List all injection rules
   sufy sandbox injection-rule list
   sufy sbx ir ls
@@ -515,31 +515,27 @@ func (this *Cmd_sandbox_injectionrule_list) Main(_xgo_arg0 string) {
   # Output as JSON
   sufy sandbox injection-rule list --format json
   sufy sbx ir ls --format json`
-//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:19:1
-	var format string
-//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:20:1
-	this.Command.Flags().StringVar(&format, "format", "pretty", "output format: pretty or json")
-//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:22:1
-	this.Run__0(func() {
 //line cmd/sufy/sandbox_injectionrule_list_cmd.gox:23:1
-		sandbox.InjectionRuleList(format)
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_injectionrule_list_cmd.gox:24:1
+		sandbox.InjectionRuleList(this.Format)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_list) Classfname() string {
 	return "sandbox_injectionrule_list"
 }
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:6
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:14
 func (this *Cmd_sandbox_injectionrule_update) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:6:1
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:14:1
 	this.Use("update <ruleID>")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:8:1
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:16:1
 	this.Short("Update an injection rule (alias: up)")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:10:1
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:18:1
 	this.Command.Aliases = []string{"up"}
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:11:1
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:19:1
 	this.Command.Args = cobra.ExactArgs(1)
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:13:1
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:21:1
 	this.Command.Example = `  # Update rule name
   sufy sandbox injection-rule update rule-xxxxxxxxxxxx --name new-name
   sufy sbx ir up rule-xxxxxxxxxxxx --name new-name
@@ -549,22 +545,10 @@ func (this *Cmd_sandbox_injectionrule_update) Main(_xgo_arg0 string) {
 
   # Update custom HTTP headers
   sufy sandbox injection-rule update rule-xxxxxxxxxxxx --type http --base-url https://api.example.com --headers "Authorization=Bearer newtoken"`
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:23:1
-	var name, typ, apiKey, baseURL, headers string
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:24:1
-	this.Command.Flags().StringVar(&name, "name", "", "new rule name")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:25:1
-	this.Command.Flags().StringVar(&typ, "type", "", "new injection type: openai, anthropic, gemini, http")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:26:1
-	this.Command.Flags().StringVar(&apiKey, "api-key", "", "new API key for openai/anthropic/gemini injection types (warning: passing secrets via CLI may leak through shell history or process lists)")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:27:1
-	this.Command.Flags().StringVar(&baseURL, "base-url", "", "new base URL or target base URL for http injection")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:28:1
-	this.Command.Flags().StringVar(&headers, "headers", "", "new HTTP headers for custom http injection (comma-separated key=value pairs)")
-//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:30:1
-	this.Run__1(func(args []string) {
 //line cmd/sufy/sandbox_injectionrule_update_cmd.gox:31:1
-		sandbox.InjectionRuleUpdate(args[0], name, typ, apiKey, baseURL, headers)
+	this.Run__1(func(args []string) {
+//line cmd/sufy/sandbox_injectionrule_update_cmd.gox:32:1
+		sandbox.InjectionRuleUpdate(args[0], this.Name, this.Type, this.APIKey, this.BaseURL, this.Headers)
 	})
 }
 func (this *Cmd_sandbox_injectionrule_update) Classfname() string {
@@ -1026,16 +1010,16 @@ func (this *Cmd_sandbox_template_init) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_template_init) Classfname() string {
 	return "sandbox_template_init"
 }
-//line cmd/sufy/sandbox_template_list_cmd.gox:5
+//line cmd/sufy/sandbox_template_list_cmd.gox:9
 func (this *Cmd_sandbox_template_list) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_template_list_cmd.gox:5:1
-	this.Use("list")
-//line cmd/sufy/sandbox_template_list_cmd.gox:7:1
-	this.Short("List sandbox templates (alias: ls)")
 //line cmd/sufy/sandbox_template_list_cmd.gox:9:1
-	this.Command.Aliases = []string{"ls"}
+	this.Use("list")
 //line cmd/sufy/sandbox_template_list_cmd.gox:11:1
+	this.Short("List sandbox templates (alias: ls)")
+//line cmd/sufy/sandbox_template_list_cmd.gox:13:1
+	this.Command.Aliases = []string{"ls"}
+//line cmd/sufy/sandbox_template_list_cmd.gox:15:1
 	this.Command.Example = `  # List all templates
   sufy sandbox template list
   sufy sbx tpl ls
@@ -1043,14 +1027,10 @@ func (this *Cmd_sandbox_template_list) Main(_xgo_arg0 string) {
   # Output as JSON
   sufy sandbox template list --format json
   sufy sbx tpl ls --format json`
-//line cmd/sufy/sandbox_template_list_cmd.gox:19:1
-	var format string
-//line cmd/sufy/sandbox_template_list_cmd.gox:20:1
-	this.Command.Flags().StringVar(&format, "format", "pretty", "output format: pretty or json")
-//line cmd/sufy/sandbox_template_list_cmd.gox:22:1
-	this.Run__0(func() {
 //line cmd/sufy/sandbox_template_list_cmd.gox:23:1
-		sandbox.TemplateList(format)
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_list_cmd.gox:24:1
+		sandbox.TemplateList(this.Format)
 	})
 }
 func (this *Cmd_sandbox_template_list) Classfname() string {
