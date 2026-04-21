@@ -4,6 +4,7 @@ import (
 )
 
 var (
+	Timeout   int    `flag:"timeout, short: t, usage: sandbox timeout in seconds"`
 	Metadata  string `flag:"metadata, short: m, usage: metadata key=value pairs (comma-separated)"`
 	AutoPause bool   `flag:"auto-pause, usage: automatically pause sandbox when timeout expires (instead of killing)"`
 	Detach    bool   `flag:"detach, usage: create sandbox without connecting terminal (sandbox stays alive until timeout)"`
@@ -48,9 +49,6 @@ this.Command.Example = `  # Create a sandbox from a template
   sufy sandbox create my-template --inline-injection 'type=openai,api-key=sk-xxx' --inline-injection 'type=http,base-url=https://api.example.com,headers=Authorization=Bearer token;X-Env=prod'
   sufy sbx cr my-template --inline-injection 'type=openai,api-key=sk-xxx'`
 
-var timeout int32
-this.Command.Flags().Int32VarP(&timeout, "timeout", "t", 0, "sandbox timeout in seconds")
-
 var envVars []string
 var injectionRuleIDs []string
 var inlineInjections []string
@@ -65,7 +63,7 @@ run args => {
 	}
 	sandbox.Create(sandbox.CreateInfo{
 		TemplateID:       templateID,
-		Timeout:          timeout,
+		Timeout:          int32(Timeout),
 		Metadata:         Metadata,
 		Detach:           Detach,
 		EnvVars:          envVars,
