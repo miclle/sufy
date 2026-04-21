@@ -2,6 +2,12 @@ import (
 	"github.com/sufy-dev/sufy/cmd/internal/sandbox"
 )
 
+var (
+	Name     string `flag:"name, usage: template project name"`
+	Language string `flag:"language, usage: programming language (go, typescript, python)"`
+	Path     string `flag:"path, usage: output directory (defaults to ./<name>)"`
+)
+
 use "init"
 
 short "Initialize a new template project (alias: it)"
@@ -22,11 +28,10 @@ this.Command.Example = `  # Interactive mode
   sufy sandbox template init --name my-api --language typescript --path ./my-api
   sufy sbx tpl it --name my-api --language typescript --path ./my-api`
 
-var info sandbox.InitInfo
-this.Command.Flags().StringVar(&info.Name, "name", "", "template project name")
-this.Command.Flags().StringVar(&info.Language, "language", "", "programming language (go, typescript, python)")
-this.Command.Flags().StringVar(&info.Path, "path", "", "output directory (defaults to ./<name>)")
-
 run => {
-	sandbox.TemplateInit(info)
+	sandbox.TemplateInit(sandbox.InitInfo{
+		Name:     Name,
+		Language: Language,
+		Path:     Path,
+	})
 }

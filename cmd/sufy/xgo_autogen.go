@@ -24,6 +24,7 @@ type Cmd_sandbox_connect struct {
 type Cmd_sandbox_create struct {
 	xcmd.Command
 	*App
+	Timeout   int    `flag:"timeout, short: t, usage: sandbox timeout in seconds"`
 	Metadata  string `flag:"metadata, short: m, usage: metadata key=value pairs (comma-separated)"`
 	AutoPause bool   `flag:"auto-pause, usage: automatically pause sandbox when timeout expires (instead of killing)"`
 	Detach    bool   `flag:"detach, usage: create sandbox without connecting terminal (sandbox stays alive until timeout)"`
@@ -85,6 +86,7 @@ type Cmd_sandbox_list struct {
 	State    string `flag:"state, short: s, usage: filter by state (comma-separated: running,paused). Defaults to running"`
 	Metadata string `flag:"metadata, short: m, usage: filter by metadata (key1=value1,key2=value2)"`
 	Format   string `flag:"format, short: f, val: pretty, usage: output format: pretty or json"`
+	Limit    int    `flag:"limit, short: l, usage: maximum number of sandboxes to return"`
 }
 type Cmd_sandbox_logs struct {
 	xcmd.Command
@@ -93,6 +95,7 @@ type Cmd_sandbox_logs struct {
 	Format  string `flag:"format, val: pretty, usage: output format: pretty or json"`
 	Follow  bool   `flag:"follow, short: f, usage: keep streaming logs until the sandbox is closed"`
 	Loggers string `flag:"loggers, usage: filter logs by loggers (comma-separated prefixes)"`
+	Limit   int    `flag:"limit, usage: maximum number of log entries to return"`
 }
 type Cmd_sandbox_metrics struct {
 	xcmd.Command
@@ -116,6 +119,18 @@ type Cmd_sandbox_resume struct {
 type Cmd_sandbox_template_build struct {
 	xcmd.Command
 	*App
+	Name         string `flag:"name, usage: template name (for creating a new template)"`
+	TemplateID   string `flag:"template-id, usage: existing template ID (for rebuilding)"`
+	FromImage    string `flag:"from-image, usage: base Docker image"`
+	FromTemplate string `flag:"from-template, usage: base template"`
+	StartCmd     string `flag:"start-cmd, usage: command to run after build"`
+	ReadyCmd     string `flag:"ready-cmd, usage: readiness check command"`
+	Dockerfile   string `flag:"dockerfile, usage: path to Dockerfile (enables v2 build)"`
+	Path         string `flag:"path, usage: build context directory (defaults to Dockerfile's parent)"`
+	Wait         bool   `flag:"wait, usage: wait for build to complete"`
+	NoCache      bool   `flag:"no-cache, usage: force full rebuild ignoring cache"`
+	CPUCount     int    `flag:"cpu, usage: sandbox CPU count"`
+	MemoryMB     int    `flag:"memory, usage: sandbox memory size in MiB"`
 }
 type Cmd_sandbox_template_builds struct {
 	xcmd.Command
@@ -138,6 +153,9 @@ type Cmd_sandbox_template_get struct {
 type Cmd_sandbox_template_init struct {
 	xcmd.Command
 	*App
+	Name     string `flag:"name, usage: template project name"`
+	Language string `flag:"language, usage: programming language (go, typescript, python)"`
+	Path     string `flag:"path, usage: output directory (defaults to ./<name>)"`
 }
 type Cmd_sandbox_template_list struct {
 	xcmd.Command
@@ -254,18 +272,18 @@ func (this *Cmd_sandbox_connect) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_connect) Classfname() string {
 	return "sandbox_connect"
 }
-//line cmd/sufy/sandbox_create_cmd.gox:12
+//line cmd/sufy/sandbox_create_cmd.gox:13
 func (this *Cmd_sandbox_create) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_create_cmd.gox:12:1
+//line cmd/sufy/sandbox_create_cmd.gox:13:1
 	this.Use("create [template]")
-//line cmd/sufy/sandbox_create_cmd.gox:14:1
+//line cmd/sufy/sandbox_create_cmd.gox:15:1
 	this.Short("Create a sandbox and connect to its terminal (alias: cr)")
-//line cmd/sufy/sandbox_create_cmd.gox:16:1
-	this.Command.Aliases = []string{"cr"}
 //line cmd/sufy/sandbox_create_cmd.gox:17:1
+	this.Command.Aliases = []string{"cr"}
+//line cmd/sufy/sandbox_create_cmd.gox:18:1
 	this.Command.Args = cobra.MaximumNArgs(1)
-//line cmd/sufy/sandbox_create_cmd.gox:19:1
+//line cmd/sufy/sandbox_create_cmd.gox:20:1
 	this.Command.Example = `  # Create a sandbox from a template
   sufy sandbox create my-template
   sufy sbx cr my-template
@@ -297,33 +315,29 @@ func (this *Cmd_sandbox_create) Main(_xgo_arg0 string) {
   # Create with inline injections
   sufy sandbox create my-template --inline-injection 'type=openai,api-key=sk-xxx' --inline-injection 'type=http,base-url=https://api.example.com,headers=Authorization=Bearer token;X-Env=prod'
   sufy sbx cr my-template --inline-injection 'type=openai,api-key=sk-xxx'`
-//line cmd/sufy/sandbox_create_cmd.gox:51:1
-	var timeout int32
 //line cmd/sufy/sandbox_create_cmd.gox:52:1
-	this.Command.Flags().Int32VarP(&timeout, "timeout", "t", 0, "sandbox timeout in seconds")
-//line cmd/sufy/sandbox_create_cmd.gox:54:1
 	var envVars []string
-//line cmd/sufy/sandbox_create_cmd.gox:55:1
+//line cmd/sufy/sandbox_create_cmd.gox:53:1
 	var injectionRuleIDs []string
-//line cmd/sufy/sandbox_create_cmd.gox:56:1
+//line cmd/sufy/sandbox_create_cmd.gox:54:1
 	var inlineInjections []string
-//line cmd/sufy/sandbox_create_cmd.gox:57:1
+//line cmd/sufy/sandbox_create_cmd.gox:55:1
 	this.Command.Flags().StringArrayVarP(&envVars, "env-var", "e", nil, "environment variables (KEY=VALUE, can be specified multiple times)")
-//line cmd/sufy/sandbox_create_cmd.gox:58:1
+//line cmd/sufy/sandbox_create_cmd.gox:56:1
 	this.Command.Flags().StringArrayVar(&injectionRuleIDs, "injection-rule", nil, "injection rule IDs to apply when creating the sandbox (can be specified multiple times)")
-//line cmd/sufy/sandbox_create_cmd.gox:59:1
+//line cmd/sufy/sandbox_create_cmd.gox:57:1
 	this.Command.Flags().StringArrayVar(&inlineInjections, "inline-injection", nil, "inline injection spec to apply when creating the sandbox (can be specified multiple times, format: type=<type>,api-key=<key>,base-url=<url>,headers=<k1=v1;k2=v2>)")
-//line cmd/sufy/sandbox_create_cmd.gox:61:1
+//line cmd/sufy/sandbox_create_cmd.gox:59:1
 	this.Run__1(func(args []string) {
-//line cmd/sufy/sandbox_create_cmd.gox:62:1
+//line cmd/sufy/sandbox_create_cmd.gox:60:1
 		templateID := ""
-//line cmd/sufy/sandbox_create_cmd.gox:63:1
+//line cmd/sufy/sandbox_create_cmd.gox:61:1
 		if len(args) > 0 {
-//line cmd/sufy/sandbox_create_cmd.gox:64:1
+//line cmd/sufy/sandbox_create_cmd.gox:62:1
 			templateID = args[0]
 		}
-//line cmd/sufy/sandbox_create_cmd.gox:66:1
-		sandbox.Create(sandbox.CreateInfo{TemplateID: templateID, Timeout: timeout, Metadata: this.Metadata, Detach: this.Detach, EnvVars: envVars, AutoPause: this.AutoPause, InjectionRuleIDs: injectionRuleIDs, InlineInjections: inlineInjections})
+//line cmd/sufy/sandbox_create_cmd.gox:64:1
+		sandbox.Create(sandbox.CreateInfo{TemplateID: templateID, Timeout: int32(this.Timeout), Metadata: this.Metadata, Detach: this.Detach, EnvVars: envVars, AutoPause: this.AutoPause, InjectionRuleIDs: injectionRuleIDs, InlineInjections: inlineInjections})
 	})
 }
 func (this *Cmd_sandbox_create) Classfname() string {
@@ -588,16 +602,16 @@ func (this *Cmd_sandbox_kill) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_kill) Classfname() string {
 	return "sandbox_kill"
 }
-//line cmd/sufy/sandbox_list_cmd.gox:11
+//line cmd/sufy/sandbox_list_cmd.gox:12
 func (this *Cmd_sandbox_list) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_list_cmd.gox:11:1
+//line cmd/sufy/sandbox_list_cmd.gox:12:1
 	this.Use("list")
-//line cmd/sufy/sandbox_list_cmd.gox:13:1
+//line cmd/sufy/sandbox_list_cmd.gox:14:1
 	this.Short("List sandboxes (alias: ls)")
-//line cmd/sufy/sandbox_list_cmd.gox:15:1
+//line cmd/sufy/sandbox_list_cmd.gox:16:1
 	this.Command.Aliases = []string{"ls"}
-//line cmd/sufy/sandbox_list_cmd.gox:17:1
+//line cmd/sufy/sandbox_list_cmd.gox:18:1
 	this.Command.Example = `  # List running sandboxes
   sufy sandbox list
   sufy sbx ls
@@ -613,29 +627,25 @@ func (this *Cmd_sandbox_list) Main(_xgo_arg0 string) {
   # Output as JSON
   sufy sandbox list -f json
   sufy sbx ls -f json`
-//line cmd/sufy/sandbox_list_cmd.gox:33:1
-	var limit int32
 //line cmd/sufy/sandbox_list_cmd.gox:34:1
-	this.Command.Flags().Int32VarP(&limit, "limit", "l", 0, "maximum number of sandboxes to return")
-//line cmd/sufy/sandbox_list_cmd.gox:36:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_list_cmd.gox:37:1
-		sandbox.List(sandbox.ListInfo{State: this.State, Metadata: this.Metadata, Limit: limit, Format: this.Format})
+//line cmd/sufy/sandbox_list_cmd.gox:35:1
+		sandbox.List(sandbox.ListInfo{State: this.State, Metadata: this.Metadata, Limit: int32(this.Limit), Format: this.Format})
 	})
 }
 func (this *Cmd_sandbox_list) Classfname() string {
 	return "sandbox_list"
 }
-//line cmd/sufy/sandbox_logs_cmd.gox:12
+//line cmd/sufy/sandbox_logs_cmd.gox:13
 func (this *Cmd_sandbox_logs) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_logs_cmd.gox:12:1
+//line cmd/sufy/sandbox_logs_cmd.gox:13:1
 	this.Use("logs <sandboxID>")
-//line cmd/sufy/sandbox_logs_cmd.gox:14:1
+//line cmd/sufy/sandbox_logs_cmd.gox:15:1
 	this.Short("View sandbox logs (alias: lg)")
-//line cmd/sufy/sandbox_logs_cmd.gox:16:1
+//line cmd/sufy/sandbox_logs_cmd.gox:17:1
 	this.Command.Aliases = []string{"lg"}
-//line cmd/sufy/sandbox_logs_cmd.gox:18:1
+//line cmd/sufy/sandbox_logs_cmd.gox:19:1
 	this.Command.Example = `  # View logs
   sufy sandbox logs sb-xxxxxxxxxxxx
   sufy sbx lg sb-xxxxxxxxxxxx
@@ -655,21 +665,17 @@ func (this *Cmd_sandbox_logs) Main(_xgo_arg0 string) {
   # Output as JSON
   sufy sandbox logs sb-xxxxxxxxxxxx --format json
   sufy sbx lg sb-xxxxxxxxxxxx --format json`
-//line cmd/sufy/sandbox_logs_cmd.gox:38:1
-	var limit int32
 //line cmd/sufy/sandbox_logs_cmd.gox:39:1
-	this.Command.Flags().Int32Var(&limit, "limit", 0, "maximum number of log entries to return")
-//line cmd/sufy/sandbox_logs_cmd.gox:41:1
 	this.Run__1(func(args []string) {
-//line cmd/sufy/sandbox_logs_cmd.gox:42:1
+//line cmd/sufy/sandbox_logs_cmd.gox:40:1
 		if len(args) == 0 {
-//line cmd/sufy/sandbox_logs_cmd.gox:43:1
+//line cmd/sufy/sandbox_logs_cmd.gox:41:1
 			sandbox.Logs(sandbox.LogsInfo{})
-//line cmd/sufy/sandbox_logs_cmd.gox:44:1
+//line cmd/sufy/sandbox_logs_cmd.gox:42:1
 			return
 		}
-//line cmd/sufy/sandbox_logs_cmd.gox:46:1
-		sandbox.Logs(sandbox.LogsInfo{SandboxID: args[0], Level: this.Level, Limit: limit, Format: this.Format, Follow: this.Follow, Loggers: this.Loggers})
+//line cmd/sufy/sandbox_logs_cmd.gox:44:1
+		sandbox.Logs(sandbox.LogsInfo{SandboxID: args[0], Level: this.Level, Limit: int32(this.Limit), Format: this.Format, Follow: this.Follow, Loggers: this.Loggers})
 	})
 }
 func (this *Cmd_sandbox_logs) Classfname() string {
@@ -780,23 +786,23 @@ func (this *Cmd_sandbox_resume) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_resume) Classfname() string {
 	return "sandbox_resume"
 }
-//line cmd/sufy/sandbox_template_build_cmd.gox:5
+//line cmd/sufy/sandbox_template_build_cmd.gox:20
 func (this *Cmd_sandbox_template_build) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_template_build_cmd.gox:5:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:20:1
 	this.Use("build")
-//line cmd/sufy/sandbox_template_build_cmd.gox:7:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:22:1
 	this.Short("Build a template (alias: bd)")
-//line cmd/sufy/sandbox_template_build_cmd.gox:9:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:24:1
 	this.Long(`Create a new template and build it, or rebuild an existing template.
 
 Supports three build modes:
   1. --from-image: Build from a base Docker image
   2. --from-template: Build from an existing template
   3. --dockerfile: Build from a Dockerfile (v2 build system)`)
-//line cmd/sufy/sandbox_template_build_cmd.gox:16:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:31:1
 	this.Command.Aliases = []string{"bd"}
-//line cmd/sufy/sandbox_template_build_cmd.gox:18:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:33:1
 	this.Command.Example = `  # Create and build a new template from a Docker image
   sufy sandbox template build --name my-template --from-image ubuntu:22.04 --wait
   sufy sbx tpl bd --name my-template --from-image ubuntu:22.04 --wait
@@ -816,36 +822,10 @@ Supports three build modes:
   # Force rebuild without cache
   sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
   sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
-//line cmd/sufy/sandbox_template_build_cmd.gox:38:1
-	var info sandbox.BuildInfo
-//line cmd/sufy/sandbox_template_build_cmd.gox:39:1
-	this.Command.Flags().StringVar(&info.Name, "name", "", "template name (for creating a new template)")
-//line cmd/sufy/sandbox_template_build_cmd.gox:40:1
-	this.Command.Flags().StringVar(&info.TemplateID, "template-id", "", "existing template ID (for rebuilding)")
-//line cmd/sufy/sandbox_template_build_cmd.gox:41:1
-	this.Command.Flags().StringVar(&info.FromImage, "from-image", "", "base Docker image")
-//line cmd/sufy/sandbox_template_build_cmd.gox:42:1
-	this.Command.Flags().StringVar(&info.FromTemplate, "from-template", "", "base template")
-//line cmd/sufy/sandbox_template_build_cmd.gox:43:1
-	this.Command.Flags().StringVar(&info.StartCmd, "start-cmd", "", "command to run after build")
-//line cmd/sufy/sandbox_template_build_cmd.gox:44:1
-	this.Command.Flags().StringVar(&info.ReadyCmd, "ready-cmd", "", "readiness check command")
-//line cmd/sufy/sandbox_template_build_cmd.gox:45:1
-	this.Command.Flags().Int32Var(&info.CPUCount, "cpu", 0, "sandbox CPU count")
-//line cmd/sufy/sandbox_template_build_cmd.gox:46:1
-	this.Command.Flags().Int32Var(&info.MemoryMB, "memory", 0, "sandbox memory size in MiB")
-//line cmd/sufy/sandbox_template_build_cmd.gox:47:1
-	this.Command.Flags().BoolVar(&info.Wait, "wait", false, "wait for build to complete")
-//line cmd/sufy/sandbox_template_build_cmd.gox:48:1
-	this.Command.Flags().BoolVar(&info.NoCache, "no-cache", false, "force full rebuild ignoring cache")
-//line cmd/sufy/sandbox_template_build_cmd.gox:49:1
-	this.Command.Flags().StringVar(&info.Dockerfile, "dockerfile", "", "path to Dockerfile (enables v2 build)")
-//line cmd/sufy/sandbox_template_build_cmd.gox:50:1
-	this.Command.Flags().StringVar(&info.Path, "path", "", "build context directory (defaults to Dockerfile's parent)")
-//line cmd/sufy/sandbox_template_build_cmd.gox:52:1
-	this.Run__0(func() {
 //line cmd/sufy/sandbox_template_build_cmd.gox:53:1
-		sandbox.TemplateBuild(info)
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_build_cmd.gox:54:1
+		sandbox.TemplateBuild(sandbox.BuildInfo{Name: this.Name, TemplateID: this.TemplateID, FromImage: this.FromImage, FromTemplate: this.FromTemplate, StartCmd: this.StartCmd, ReadyCmd: this.ReadyCmd, CPUCount: int32(this.CPUCount), MemoryMB: int32(this.MemoryMB), Wait: this.Wait, NoCache: this.NoCache, Dockerfile: this.Dockerfile, Path: this.Path})
 	})
 }
 func (this *Cmd_sandbox_template_build) Classfname() string {
@@ -970,18 +950,18 @@ func (this *Cmd_sandbox_template_get) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_template_get) Classfname() string {
 	return "sandbox_template_get"
 }
-//line cmd/sufy/sandbox_template_init_cmd.gox:5
+//line cmd/sufy/sandbox_template_init_cmd.gox:11
 func (this *Cmd_sandbox_template_init) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_template_init_cmd.gox:5:1
-	this.Use("init")
-//line cmd/sufy/sandbox_template_init_cmd.gox:7:1
-	this.Short("Initialize a new template project (alias: it)")
-//line cmd/sufy/sandbox_template_init_cmd.gox:9:1
-	this.Long("Scaffold a new template project with boilerplate files for the selected language.")
 //line cmd/sufy/sandbox_template_init_cmd.gox:11:1
-	this.Command.Aliases = []string{"it"}
+	this.Use("init")
 //line cmd/sufy/sandbox_template_init_cmd.gox:13:1
+	this.Short("Initialize a new template project (alias: it)")
+//line cmd/sufy/sandbox_template_init_cmd.gox:15:1
+	this.Long("Scaffold a new template project with boilerplate files for the selected language.")
+//line cmd/sufy/sandbox_template_init_cmd.gox:17:1
+	this.Command.Aliases = []string{"it"}
+//line cmd/sufy/sandbox_template_init_cmd.gox:19:1
 	this.Command.Example = `  # Interactive mode
   sufy sandbox template init
   sufy sbx tpl it
@@ -993,18 +973,10 @@ func (this *Cmd_sandbox_template_init) Main(_xgo_arg0 string) {
   # Non-interactive mode with custom path
   sufy sandbox template init --name my-api --language typescript --path ./my-api
   sufy sbx tpl it --name my-api --language typescript --path ./my-api`
-//line cmd/sufy/sandbox_template_init_cmd.gox:25:1
-	var info sandbox.InitInfo
-//line cmd/sufy/sandbox_template_init_cmd.gox:26:1
-	this.Command.Flags().StringVar(&info.Name, "name", "", "template project name")
-//line cmd/sufy/sandbox_template_init_cmd.gox:27:1
-	this.Command.Flags().StringVar(&info.Language, "language", "", "programming language (go, typescript, python)")
-//line cmd/sufy/sandbox_template_init_cmd.gox:28:1
-	this.Command.Flags().StringVar(&info.Path, "path", "", "output directory (defaults to ./<name>)")
-//line cmd/sufy/sandbox_template_init_cmd.gox:30:1
-	this.Run__0(func() {
 //line cmd/sufy/sandbox_template_init_cmd.gox:31:1
-		sandbox.TemplateInit(info)
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_init_cmd.gox:32:1
+		sandbox.TemplateInit(sandbox.InitInfo{Name: this.Name, Language: this.Language, Path: this.Path})
 	})
 }
 func (this *Cmd_sandbox_template_init) Classfname() string {

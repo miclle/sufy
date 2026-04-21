@@ -6,6 +6,7 @@ var (
 	State    string `flag:"state, short: s, usage: filter by state (comma-separated: running,paused). Defaults to running"`
 	Metadata string `flag:"metadata, short: m, usage: filter by metadata (key1=value1,key2=value2)"`
 	Format   string `flag:"format, short: f, val: pretty, usage: output format: pretty or json"`
+	Limit    int    `flag:"limit, short: l, usage: maximum number of sandboxes to return"`
 )
 
 use "list"
@@ -30,14 +31,11 @@ this.Command.Example = `  # List running sandboxes
   sufy sandbox list -f json
   sufy sbx ls -f json`
 
-var limit int32
-this.Command.Flags().Int32VarP(&limit, "limit", "l", 0, "maximum number of sandboxes to return")
-
 run => {
 	sandbox.List(sandbox.ListInfo{
 		State:    State,
 		Metadata: Metadata,
-		Limit:    limit,
+		Limit:    int32(Limit),
 		Format:   Format,
 	})
 }
