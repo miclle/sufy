@@ -4,6 +4,8 @@
 
 # Output binary for `make build`. Override with `make build OUT=/usr/local/bin/sufy`.
 OUT ?= ./sufy
+# Output binary for the spf13/cobra implementation.
+OUT_SPF13 ?= ./sufy-spf13
 
 # Regenerate xgo_autogen.go from cmd/sufy/*.gox. Required after editing any .gox file.
 xgo-gen:
@@ -13,13 +15,20 @@ xgo-gen:
 build: xgo-gen
 	go build -o $(OUT) ./cmd/sufy/
 
+# Build the parallel spf13/cobra implementation for comparison.
+build-spf13:
+	go build -o $(OUT_SPF13) ./cmd/sufy-spf13/
+
+# Build both CLI variants.
+build-all: build build-spf13
+
 # Install the sufy CLI into $GOPATH/bin (or $GOBIN).
 install: xgo-gen
 	go install ./cmd/sufy/
 
-# Remove the local ./sufy binary produced by `make build`.
+# Remove the local ./sufy and ./sufy-spf13 binaries produced by build targets.
 clean:
-	rm -f ./sufy
+	rm -f ./sufy ./sufy-spf13
 
 # --- Tests / codegen / examples ---------------------------------------------
 
