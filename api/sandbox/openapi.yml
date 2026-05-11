@@ -442,6 +442,14 @@ components:
           maxItems: 20
           items:
             $ref: "#/components/schemas/SandboxInjection"
+        resources:
+          type: array
+          description: |
+            Resources to materialize for the sandbox before it starts.
+            Each item is a discriminated union with a "type" field.
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/SandboxResource"
     SandboxInjection:
       oneOf:
         - $ref: "#/components/schemas/InjectionById"
@@ -449,6 +457,8 @@ components:
         - $ref: "#/components/schemas/OpenaiInjection"
         - $ref: "#/components/schemas/AnthropicInjection"
         - $ref: "#/components/schemas/GeminiInjection"
+        - $ref: "#/components/schemas/SufyInjection"
+        - $ref: "#/components/schemas/GithubInjection"
       discriminator:
         propertyName: type
         mapping:
@@ -457,12 +467,16 @@ components:
           openai: "#/components/schemas/OpenaiInjection"
           anthropic: "#/components/schemas/AnthropicInjection"
           gemini: "#/components/schemas/GeminiInjection"
+          sufy: "#/components/schemas/SufyInjection"
+          github: "#/components/schemas/GithubInjection"
     Injection:
       oneOf:
         - $ref: "#/components/schemas/HttpInjection"
         - $ref: "#/components/schemas/OpenaiInjection"
         - $ref: "#/components/schemas/AnthropicInjection"
         - $ref: "#/components/schemas/GeminiInjection"
+        - $ref: "#/components/schemas/SufyInjection"
+        - $ref: "#/components/schemas/GithubInjection"
       discriminator:
         propertyName: type
         mapping:
@@ -470,6 +484,15 @@ components:
           openai: "#/components/schemas/OpenaiInjection"
           anthropic: "#/components/schemas/AnthropicInjection"
           gemini: "#/components/schemas/GeminiInjection"
+          sufy: "#/components/schemas/SufyInjection"
+          github: "#/components/schemas/GithubInjection"
+    SandboxResource:
+      oneOf:
+        - $ref: "#/components/schemas/GitRepositoryResource"
+      discriminator:
+        propertyName: type
+        mapping:
+          github_repository: "#/components/schemas/GitRepositoryResource"
     InjectionById:
       type: object
       description: Reference an existing injection rule by ID
@@ -571,6 +594,73 @@ components:
           type: string
           writeOnly: true
           description: API key for Google Gemini API
+    SufyInjection:
+      type: object
+      description: |
+        Sufy AI API injection. Sufy's gateway is compatible with both OpenAI and Anthropic
+        protocols on the same host, so the api_key is injected into whichever auth header the
+        outgoing request actually carries (Authorization or x-api-key).
+      required:
+        - type
+        - api_key
+      properties:
+        type:
+          type: string
+          enum:
+            - sufy
+          description: Injection type identifier
+        base_url:
+          type: string
+          description: Base URL of the Sufy AI gateway
+        api_key:
+          type: string
+          writeOnly: true
+          description: API key for Sufy AI API
+    GithubInjection:
+      type: object
+      description: |
+        GitHub credential used by the platform to validate and clone repositories before sandbox startup, and to authenticate matching HTTPS requests to github.com and api.github.com while the sandbox is running.
+        The token is not exposed inside the sandbox as plaintext.
+      required:
+        - type
+        - token
+      properties:
+        type:
+          type: string
+          enum:
+            - github
+          description: Injection type identifier
+        token:
+          type: string
+          writeOnly: true
+          description: GitHub token with access to all requested repositories
+    GitRepositoryResource:
+      type: object
+      description: |
+        GitHub repository resource mounted into the sandbox.
+        The platform materializes a cached snapshot of the repository for mounting.
+        The first snapshot is cloned from the repository default branch HEAD, and later sandboxes may reuse that cached snapshot without refreshing it to the latest HEAD.
+      required:
+        - type
+        - url
+        - mount_path
+        - authorization_token
+      properties:
+        type:
+          type: string
+          enum:
+            - github_repository
+          description: Resource type identifier
+        url:
+          type: string
+          description: GitHub repository URL in HTTPS or SSH form, for example https://github.com/owner/repo.git or git@github.com:owner/repo.git
+        mount_path:
+          type: string
+          description: Absolute path where the repository contents should appear inside the sandbox
+        authorization_token:
+          type: string
+          writeOnly: true
+          description: GitHub token used to access this repository. All GitHub repository resources in a single sandbox must currently use the same token.
     ResumedSandbox:
       properties:
         timeout:
@@ -793,6 +883,10 @@ components:
           $ref: "#/components/schemas/DiskSizeMB"
         envdVersion:
           $ref: "#/components/schemas/EnvdVersion"
+        objectStorageBytes:
+          type: integer
+          format: int64
+          description: Total bytes used in object storage for this build
     TemplateWithBuilds:
       required:
         - templateID

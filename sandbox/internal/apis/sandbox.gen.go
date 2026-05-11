@@ -48,6 +48,16 @@ const (
 	Registry GeneralRegistryType = "registry"
 )
 
+// Defines values for GitRepositoryResourceType.
+const (
+	GithubRepository GitRepositoryResourceType = "github_repository"
+)
+
+// Defines values for GithubInjectionType.
+const (
+	Github GithubInjectionType = "github"
+)
+
 // Defines values for HTTPInjectionType.
 const (
 	HTTP HTTPInjectionType = "http"
@@ -87,6 +97,11 @@ const (
 const (
 	Paused  SandboxState = "paused"
 	Running SandboxState = "running"
+)
+
+// Defines values for SufyInjectionType.
+const (
+	Sufy SufyInjectionType = "sufy"
 )
 
 // Defines values for TemplateBuildStatus.
@@ -260,6 +275,39 @@ type GeneralRegistry struct {
 // GeneralRegistryType Type of registry authentication
 type GeneralRegistryType string
 
+// GitRepositoryResource GitHub repository resource mounted into the sandbox.
+// The platform materializes a cached snapshot of the repository for mounting.
+// The first snapshot is cloned from the repository default branch HEAD, and later sandboxes may reuse that cached snapshot without refreshing it to the latest HEAD.
+type GitRepositoryResource struct {
+	// AuthorizationToken GitHub token used to access this repository. All GitHub repository resources in a single sandbox must currently use the same token.
+	AuthorizationToken *string `json:"authorization_token,omitempty"`
+
+	// MountPath Absolute path where the repository contents should appear inside the sandbox
+	MountPath string `json:"mount_path"`
+
+	// Type Resource type identifier
+	Type GitRepositoryResourceType `json:"type"`
+
+	// URL GitHub repository URL in HTTPS or SSH form, for example https://github.com/owner/repo.git or git@github.com:owner/repo.git
+	URL string `json:"url"`
+}
+
+// GitRepositoryResourceType Resource type identifier
+type GitRepositoryResourceType string
+
+// GithubInjection GitHub credential used by the platform to validate and clone repositories before sandbox startup, and to authenticate matching HTTPS requests to github.com and api.github.com while the sandbox is running.
+// The token is not exposed inside the sandbox as plaintext.
+type GithubInjection struct {
+	// Token GitHub token with access to all requested repositories
+	Token *string `json:"token,omitempty"`
+
+	// Type Injection type identifier
+	Type GithubInjectionType `json:"type"`
+}
+
+// GithubInjectionType Injection type identifier
+type GithubInjectionType string
+
 // HTTPInjection Custom HTTP injection with base URL and headers
 type HTTPInjection struct {
 	// BaseURL Base URL for matching HTTPS requests. The domain part is used for host matching.
@@ -393,6 +441,10 @@ type NewSandbox struct {
 	Mcp      *Mcp                  `json:"mcp"`
 	Metadata *SandboxMetadata      `json:"metadata,omitempty"`
 	Network  *SandboxNetworkConfig `json:"network,omitempty"`
+
+	// Resources Resources to materialize for the sandbox before it starts.
+	// Each item is a discriminated union with a "type" field.
+	Resources *[]SandboxResource `json:"resources,omitempty"`
 
 	// Secure Secure all system communication with sandbox
 	Secure *bool `json:"secure,omitempty"`
@@ -585,6 +637,11 @@ type SandboxNetworkConfig struct {
 	MaskRequestHost *string `json:"maskRequestHost,omitempty"`
 }
 
+// SandboxResource defines model for SandboxResource.
+type SandboxResource struct {
+	union json.RawMessage
+}
+
 // SandboxState State of the sandbox
 type SandboxState string
 
@@ -592,6 +649,23 @@ type SandboxState string
 type SandboxesWithMetrics struct {
 	Sandboxes map[string]SandboxMetric `json:"sandboxes"`
 }
+
+// SufyInjection Sufy AI API injection. Sufy's gateway is compatible with both OpenAI and Anthropic
+// protocols on the same host, so the api_key is injected into whichever auth header the
+// outgoing request actually carries (Authorization or x-api-key).
+type SufyInjection struct {
+	// APIKey API key for Sufy AI API
+	APIKey *string `json:"api_key,omitempty"`
+
+	// BaseURL Base URL of the Sufy AI gateway
+	BaseURL *string `json:"base_url,omitempty"`
+
+	// Type Injection type identifier
+	Type SufyInjectionType `json:"type"`
+}
+
+// SufyInjectionType Injection type identifier
+type SufyInjectionType string
 
 // TeamUser defines model for TeamUser.
 type TeamUser struct {
@@ -679,6 +753,9 @@ type TemplateBuild struct {
 
 	// MemoryMB Memory for the sandbox in MiB
 	MemoryMB MemoryMB `json:"memoryMB"`
+
+	// ObjectStorageBytes Total bytes used in object storage for this build
+	ObjectStorageBytes *int64 `json:"objectStorageBytes,omitempty"`
 
 	// Status Status of the template build
 	Status TemplateBuildStatus `json:"status"`
@@ -1335,6 +1412,62 @@ func (t *Injection) MergeGeminiInjection(v GeminiInjection) error {
 	return err
 }
 
+// AsSufyInjection returns the union data inside the Injection as a SufyInjection
+func (t Injection) AsSufyInjection() (SufyInjection, error) {
+	var body SufyInjection
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSufyInjection overwrites any union data inside the Injection as the provided SufyInjection
+func (t *Injection) FromSufyInjection(v SufyInjection) error {
+	v.Type = "sufy"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSufyInjection performs a merge with any union data inside the Injection, using the provided SufyInjection
+func (t *Injection) MergeSufyInjection(v SufyInjection) error {
+	v.Type = "sufy"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsGithubInjection returns the union data inside the Injection as a GithubInjection
+func (t Injection) AsGithubInjection() (GithubInjection, error) {
+	var body GithubInjection
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGithubInjection overwrites any union data inside the Injection as the provided GithubInjection
+func (t *Injection) FromGithubInjection(v GithubInjection) error {
+	v.Type = "github"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGithubInjection performs a merge with any union data inside the Injection, using the provided GithubInjection
+func (t *Injection) MergeGithubInjection(v GithubInjection) error {
+	v.Type = "github"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t Injection) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"type"`
@@ -1353,10 +1486,14 @@ func (t Injection) ValueByDiscriminator() (interface{}, error) {
 		return t.AsAnthropicInjection()
 	case "gemini":
 		return t.AsGeminiInjection()
+	case "github":
+		return t.AsGithubInjection()
 	case "http":
 		return t.AsHTTPInjection()
 	case "openai":
 		return t.AsOpenaiInjection()
+	case "sufy":
+		return t.AsSufyInjection()
 	default:
 		return nil, errors.New("unknown discriminator value: " + discriminator)
 	}
@@ -1512,6 +1649,62 @@ func (t *SandboxInjection) MergeGeminiInjection(v GeminiInjection) error {
 	return err
 }
 
+// AsSufyInjection returns the union data inside the SandboxInjection as a SufyInjection
+func (t SandboxInjection) AsSufyInjection() (SufyInjection, error) {
+	var body SufyInjection
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSufyInjection overwrites any union data inside the SandboxInjection as the provided SufyInjection
+func (t *SandboxInjection) FromSufyInjection(v SufyInjection) error {
+	v.Type = "sufy"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSufyInjection performs a merge with any union data inside the SandboxInjection, using the provided SufyInjection
+func (t *SandboxInjection) MergeSufyInjection(v SufyInjection) error {
+	v.Type = "sufy"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsGithubInjection returns the union data inside the SandboxInjection as a GithubInjection
+func (t SandboxInjection) AsGithubInjection() (GithubInjection, error) {
+	var body GithubInjection
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGithubInjection overwrites any union data inside the SandboxInjection as the provided GithubInjection
+func (t *SandboxInjection) FromGithubInjection(v GithubInjection) error {
+	v.Type = "github"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGithubInjection performs a merge with any union data inside the SandboxInjection, using the provided GithubInjection
+func (t *SandboxInjection) MergeGithubInjection(v GithubInjection) error {
+	v.Type = "github"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t SandboxInjection) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"type"`
@@ -1530,12 +1723,16 @@ func (t SandboxInjection) ValueByDiscriminator() (interface{}, error) {
 		return t.AsAnthropicInjection()
 	case "gemini":
 		return t.AsGeminiInjection()
+	case "github":
+		return t.AsGithubInjection()
 	case "http":
 		return t.AsHTTPInjection()
 	case "id":
 		return t.AsInjectionByID()
 	case "openai":
 		return t.AsOpenaiInjection()
+	case "sufy":
+		return t.AsSufyInjection()
 	default:
 		return nil, errors.New("unknown discriminator value: " + discriminator)
 	}
@@ -1547,6 +1744,65 @@ func (t SandboxInjection) MarshalJSON() ([]byte, error) {
 }
 
 func (t *SandboxInjection) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGitRepositoryResource returns the union data inside the SandboxResource as a GitRepositoryResource
+func (t SandboxResource) AsGitRepositoryResource() (GitRepositoryResource, error) {
+	var body GitRepositoryResource
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGitRepositoryResource overwrites any union data inside the SandboxResource as the provided GitRepositoryResource
+func (t *SandboxResource) FromGitRepositoryResource(v GitRepositoryResource) error {
+	v.Type = "github_repository"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGitRepositoryResource performs a merge with any union data inside the SandboxResource, using the provided GitRepositoryResource
+func (t *SandboxResource) MergeGitRepositoryResource(v GitRepositoryResource) error {
+	v.Type = "github_repository"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t SandboxResource) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t SandboxResource) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "github_repository":
+		return t.AsGitRepositoryResource()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t SandboxResource) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *SandboxResource) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
