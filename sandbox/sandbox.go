@@ -73,6 +73,9 @@ type Sandbox struct {
 
 	ptyOnce sync.Once
 	pty     *Pty
+
+	gitOnce sync.Once
+	git     *Git
 }
 
 // newSandbox builds a Sandbox from an API payload.
@@ -411,6 +414,16 @@ func (s *Sandbox) Pty() *Pty {
 		s.pty = newPty(s, s.processClient())
 	})
 	return s.pty
+}
+
+// Git returns the git operations sub-module, lazily initialized. The sandbox
+// must have the git binary preinstalled; only HTTPS + username/password
+// (token) authentication is supported.
+func (s *Sandbox) Git() *Git {
+	s.gitOnce.Do(func() {
+		s.git = newGit(s.Commands())
+	})
+	return s.git
 }
 
 // GetHost returns the external hostname through which the given port on this
