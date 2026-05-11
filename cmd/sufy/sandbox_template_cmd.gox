@@ -18,7 +18,11 @@ this.Command.Example = `  # View template subcommands
 
   # Get template details
   sufy sandbox template get tmpl-xxxxxxxxxxxx
-  sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
+  sufy sbx tpl gt tmpl-xxxxxxxxxxxx
+
+  # Show sufy.sandbox.toml configuration reference
+  sufy sandbox template config
+  sufy sbx tpl cfg`
 
 run => {
 	help

@@ -6,6 +6,7 @@ require github.com/goplus/cobra v1.10.7 //xgo:class
 
 require (
 	connectrpc.com/connect v1.19.1
+	github.com/BurntSushi/toml v1.6.0
 	github.com/charmbracelet/huh v1.0.0
 	github.com/fatih/color v1.18.0
 	github.com/oapi-codegen/runtime v1.4.0

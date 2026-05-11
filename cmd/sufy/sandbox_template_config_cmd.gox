@@ -1,0 +1,23 @@
+import (
+	"github.com/sufy-dev/sufy/cmd/sufy/internal/sandbox"
+)
+
+use "config"
+
+short "Show sufy.sandbox.toml configuration reference (alias: cfg)"
+
+long `Print the sufy.sandbox.toml reference. This command only prints documentation;
+it does not read, create, or modify any local configuration file.
+
+The reference covers field semantics, the CLI > file > default precedence,
+template lookup rules, and automatic template_id writeback behavior.`
+
+this.Command.Aliases = []string{"cfg"}
+
+this.Command.Example = `  # Show sufy.sandbox.toml configuration reference
+  sufy sandbox template config
+  sufy sbx tpl cfg`
+
+run => {
+	sandbox.PrintTemplateConfigDoc()
+}

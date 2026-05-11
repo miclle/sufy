@@ -131,12 +131,17 @@ type Cmd_sandbox_template_build struct {
 	NoCache      bool   `flag:"no-cache, usage: force full rebuild ignoring cache"`
 	CPUCount     int    `flag:"cpu, usage: sandbox CPU count"`
 	MemoryMB     int    `flag:"memory, usage: sandbox memory size in MiB"`
+	ConfigPath   string `flag:"config, usage: path to sufy.sandbox.toml (defaults to ./sufy.sandbox.toml if present)"`
 }
 type Cmd_sandbox_template_builds struct {
 	xcmd.Command
 	*App
 }
 type Cmd_sandbox_template struct {
+	xcmd.Command
+	*App
+}
+type Cmd_sandbox_template_config struct {
 	xcmd.Command
 	*App
 }
@@ -201,13 +206,14 @@ func (this *App) Main() {
 	_xgo_obj16 := &Cmd_sandbox_template_build{App: this}
 	_xgo_obj17 := &Cmd_sandbox_template_builds{App: this}
 	_xgo_obj18 := &Cmd_sandbox_template{App: this}
-	_xgo_obj19 := &Cmd_sandbox_template_delete{App: this}
-	_xgo_obj20 := &Cmd_sandbox_template_get{App: this}
-	_xgo_obj21 := &Cmd_sandbox_template_init{App: this}
-	_xgo_obj22 := &Cmd_sandbox_template_list{App: this}
-	_xgo_obj23 := &Cmd_sandbox_template_publish{App: this}
-	_xgo_obj24 := &Cmd_sandbox_template_unpublish{App: this}
-	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2, _xgo_obj3, _xgo_obj4, _xgo_obj5, _xgo_obj6, _xgo_obj7, _xgo_obj8, _xgo_obj9, _xgo_obj10, _xgo_obj11, _xgo_obj12, _xgo_obj13, _xgo_obj14, _xgo_obj15, _xgo_obj16, _xgo_obj17, _xgo_obj18, _xgo_obj19, _xgo_obj20, _xgo_obj21, _xgo_obj22, _xgo_obj23, _xgo_obj24)
+	_xgo_obj19 := &Cmd_sandbox_template_config{App: this}
+	_xgo_obj20 := &Cmd_sandbox_template_delete{App: this}
+	_xgo_obj21 := &Cmd_sandbox_template_get{App: this}
+	_xgo_obj22 := &Cmd_sandbox_template_init{App: this}
+	_xgo_obj23 := &Cmd_sandbox_template_list{App: this}
+	_xgo_obj24 := &Cmd_sandbox_template_publish{App: this}
+	_xgo_obj25 := &Cmd_sandbox_template_unpublish{App: this}
+	xcmd.XGot_App_Main(this, _xgo_obj0, _xgo_obj1, _xgo_obj2, _xgo_obj3, _xgo_obj4, _xgo_obj5, _xgo_obj6, _xgo_obj7, _xgo_obj8, _xgo_obj9, _xgo_obj10, _xgo_obj11, _xgo_obj12, _xgo_obj13, _xgo_obj14, _xgo_obj15, _xgo_obj16, _xgo_obj17, _xgo_obj18, _xgo_obj19, _xgo_obj20, _xgo_obj21, _xgo_obj22, _xgo_obj23, _xgo_obj24, _xgo_obj25)
 }
 //line cmd/sufy/sandbox_cmd.gox:1
 func (this *Cmd_sandbox) Main(_xgo_arg0 string) {
@@ -786,23 +792,27 @@ func (this *Cmd_sandbox_resume) Main(_xgo_arg0 string) {
 func (this *Cmd_sandbox_resume) Classfname() string {
 	return "sandbox_resume"
 }
-//line cmd/sufy/sandbox_template_build_cmd.gox:20
+//line cmd/sufy/sandbox_template_build_cmd.gox:21
 func (this *Cmd_sandbox_template_build) Main(_xgo_arg0 string) {
 	this.Command.Main(_xgo_arg0)
-//line cmd/sufy/sandbox_template_build_cmd.gox:20:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:21:1
 	this.Use("build")
-//line cmd/sufy/sandbox_template_build_cmd.gox:22:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:23:1
 	this.Short("Build a template (alias: bd)")
-//line cmd/sufy/sandbox_template_build_cmd.gox:24:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:25:1
 	this.Long(`Create a new template and build it, or rebuild an existing template.
 
 Supports three build modes:
   1. --from-image: Build from a base Docker image
   2. --from-template: Build from an existing template
-  3. --dockerfile: Build from a Dockerfile (v2 build system)`)
-//line cmd/sufy/sandbox_template_build_cmd.gox:31:1
+  3. --dockerfile: Build from a Dockerfile (v2 build system)
+
+Parameters can be persisted in sufy.sandbox.toml; CLI flags take precedence over the file.
+When --template-id is not provided, the command first looks up --name on the server:
+a hit triggers a rebuild, a miss falls back to create.`)
+//line cmd/sufy/sandbox_template_build_cmd.gox:36:1
 	this.Command.Aliases = []string{"bd"}
-//line cmd/sufy/sandbox_template_build_cmd.gox:33:1
+//line cmd/sufy/sandbox_template_build_cmd.gox:38:1
 	this.Command.Example = `  # Create and build a new template from a Docker image
   sufy sandbox template build --name my-template --from-image ubuntu:22.04 --wait
   sufy sbx tpl bd --name my-template --from-image ubuntu:22.04 --wait
@@ -821,11 +831,19 @@ Supports three build modes:
 
   # Force rebuild without cache
   sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
-  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
-//line cmd/sufy/sandbox_template_build_cmd.gox:53:1
+  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
+
+  # Use sufy.sandbox.toml from the current directory
+  sufy sandbox template build --wait
+  sufy sbx tpl bd --wait
+
+  # Specify an explicit config file
+  sufy sandbox template build --config ./configs/prod.toml --wait
+  sufy sbx tpl bd --config ./configs/prod.toml --wait`
+//line cmd/sufy/sandbox_template_build_cmd.gox:66:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_template_build_cmd.gox:54:1
-		sandbox.TemplateBuild(sandbox.BuildInfo{Name: this.Name, TemplateID: this.TemplateID, FromImage: this.FromImage, FromTemplate: this.FromTemplate, StartCmd: this.StartCmd, ReadyCmd: this.ReadyCmd, CPUCount: int32(this.CPUCount), MemoryMB: int32(this.MemoryMB), Wait: this.Wait, NoCache: this.NoCache, Dockerfile: this.Dockerfile, Path: this.Path})
+//line cmd/sufy/sandbox_template_build_cmd.gox:67:1
+		sandbox.TemplateBuild(sandbox.BuildInfo{Name: this.Name, TemplateID: this.TemplateID, FromImage: this.FromImage, FromTemplate: this.FromTemplate, StartCmd: this.StartCmd, ReadyCmd: this.ReadyCmd, CPUCount: int32(this.CPUCount), MemoryMB: int32(this.MemoryMB), Wait: this.Wait, NoCache: this.NoCache, NoCacheChanged: this.Command.Flags().Changed("no-cache"), Dockerfile: this.Dockerfile, Path: this.Path, ConfigPath: this.ConfigPath})
 	})
 }
 func (this *Cmd_sandbox_template_build) Classfname() string {
@@ -879,15 +897,47 @@ func (this *Cmd_sandbox_template) Main(_xgo_arg0 string) {
 
   # Get template details
   sufy sandbox template get tmpl-xxxxxxxxxxxx
-  sufy sbx tpl gt tmpl-xxxxxxxxxxxx`
-//line cmd/sufy/sandbox_template_cmd.gox:23:1
+  sufy sbx tpl gt tmpl-xxxxxxxxxxxx
+
+  # Show sufy.sandbox.toml configuration reference
+  sufy sandbox template config
+  sufy sbx tpl cfg`
+//line cmd/sufy/sandbox_template_cmd.gox:27:1
 	this.Run__0(func() {
-//line cmd/sufy/sandbox_template_cmd.gox:24:1
+//line cmd/sufy/sandbox_template_cmd.gox:28:1
 		this.Help()
 	})
 }
 func (this *Cmd_sandbox_template) Classfname() string {
 	return "sandbox_template"
+}
+//line cmd/sufy/sandbox_template_config_cmd.gox:5
+func (this *Cmd_sandbox_template_config) Main(_xgo_arg0 string) {
+	this.Command.Main(_xgo_arg0)
+//line cmd/sufy/sandbox_template_config_cmd.gox:5:1
+	this.Use("config")
+//line cmd/sufy/sandbox_template_config_cmd.gox:7:1
+	this.Short("Show sufy.sandbox.toml configuration reference (alias: cfg)")
+//line cmd/sufy/sandbox_template_config_cmd.gox:9:1
+	this.Long(`Print the sufy.sandbox.toml reference. This command only prints documentation;
+it does not read, create, or modify any local configuration file.
+
+The reference covers field semantics, the CLI > file > default precedence,
+template lookup rules, and automatic template_id writeback behavior.`)
+//line cmd/sufy/sandbox_template_config_cmd.gox:15:1
+	this.Command.Aliases = []string{"cfg"}
+//line cmd/sufy/sandbox_template_config_cmd.gox:17:1
+	this.Command.Example = `  # Show sufy.sandbox.toml configuration reference
+  sufy sandbox template config
+  sufy sbx tpl cfg`
+//line cmd/sufy/sandbox_template_config_cmd.gox:21:1
+	this.Run__0(func() {
+//line cmd/sufy/sandbox_template_config_cmd.gox:22:1
+		sandbox.PrintTemplateConfigDoc()
+	})
+}
+func (this *Cmd_sandbox_template_config) Classfname() string {
+	return "sandbox_template_config"
 }
 //line cmd/sufy/sandbox_template_delete_cmd.gox:10
 func (this *Cmd_sandbox_template_delete) Main(_xgo_arg0 string) {

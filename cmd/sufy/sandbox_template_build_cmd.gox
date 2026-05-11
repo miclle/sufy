@@ -15,6 +15,7 @@ var (
 	NoCache      bool   `flag:"no-cache, usage: force full rebuild ignoring cache"`
 	CPUCount     int    `flag:"cpu, usage: sandbox CPU count"`
 	MemoryMB     int    `flag:"memory, usage: sandbox memory size in MiB"`
+	ConfigPath   string `flag:"config, usage: path to sufy.sandbox.toml (defaults to ./sufy.sandbox.toml if present)"`
 )
 
 use "build"
@@ -26,7 +27,11 @@ long `Create a new template and build it, or rebuild an existing template.
 Supports three build modes:
   1. --from-image: Build from a base Docker image
   2. --from-template: Build from an existing template
-  3. --dockerfile: Build from a Dockerfile (v2 build system)`
+  3. --dockerfile: Build from a Dockerfile (v2 build system)
+
+Parameters can be persisted in sufy.sandbox.toml; CLI flags take precedence over the file.
+When --template-id is not provided, the command first looks up --name on the server:
+a hit triggers a rebuild, a miss falls back to create.`
 
 this.Command.Aliases = []string{"bd"}
 
@@ -48,21 +53,31 @@ this.Command.Example = `  # Create and build a new template from a Docker image
 
   # Force rebuild without cache
   sufy sandbox template build --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
-  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait`
+  sufy sbx tpl bd --template-id tmpl-xxxxxxxxxxxx --no-cache --wait
+
+  # Use sufy.sandbox.toml from the current directory
+  sufy sandbox template build --wait
+  sufy sbx tpl bd --wait
+
+  # Specify an explicit config file
+  sufy sandbox template build --config ./configs/prod.toml --wait
+  sufy sbx tpl bd --config ./configs/prod.toml --wait`
 
 run => {
 	sandbox.TemplateBuild(sandbox.BuildInfo{
-		Name:         Name,
-		TemplateID:   TemplateID,
-		FromImage:    FromImage,
-		FromTemplate: FromTemplate,
-		StartCmd:     StartCmd,
-		ReadyCmd:     ReadyCmd,
-		CPUCount:     int32(CPUCount),
-		MemoryMB:     int32(MemoryMB),
-		Wait:         Wait,
-		NoCache:      NoCache,
-		Dockerfile:   Dockerfile,
-		Path:         Path,
+		Name:           Name,
+		TemplateID:     TemplateID,
+		FromImage:      FromImage,
+		FromTemplate:   FromTemplate,
+		StartCmd:       StartCmd,
+		ReadyCmd:       ReadyCmd,
+		CPUCount:       int32(CPUCount),
+		MemoryMB:       int32(MemoryMB),
+		Wait:           Wait,
+		NoCache:        NoCache,
+		NoCacheChanged: this.Command.Flags().Changed("no-cache"),
+		Dockerfile:     Dockerfile,
+		Path:           Path,
+		ConfigPath:     ConfigPath,
 	})
 }

@@ -67,7 +67,20 @@ func TemplateList(format string) {
 }
 
 // TemplateGet prints template details as JSON.
+// When templateID is empty, falls back to template_id or name from sufy.sandbox.toml.
 func TemplateGet(templateID string) {
+	if templateID == "" {
+		id, ok := templateIDFromCwdConfig()
+		if !ok {
+			return
+		}
+		templateID = id
+	}
+	if templateID == "" {
+		PrintError("template ID is required (positional arg or sufy.sandbox.toml)")
+		return
+	}
+
 	client := MustNewSandboxClient()
 	ctx := context.Background()
 
@@ -80,9 +93,21 @@ func TemplateGet(templateID string) {
 }
 
 // TemplateDelete deletes one or more templates with optional interactive selection.
+// When templateIDs is empty and select is disabled, falls back to template_id or name
+// from sufy.sandbox.toml.
 func TemplateDelete(templateIDs []string, yes, sel bool) {
 	client := MustNewSandboxClient()
 	ctx := context.Background()
+
+	if len(templateIDs) == 0 && !sel {
+		id, ok := templateIDFromCwdConfig()
+		if !ok {
+			return
+		}
+		if id != "" {
+			templateIDs = []string{id}
+		}
+	}
 
 	if sel {
 		templates, err := client.ListTemplates(ctx, nil)
@@ -114,6 +139,11 @@ func TemplateDelete(templateIDs []string, yes, sel bool) {
 		templateIDs = selected
 	}
 
+	if len(templateIDs) == 0 {
+		PrintError("at least one template ID is required (positional args or sufy.sandbox.toml)")
+		return
+	}
+
 	if !ConfirmAction(fmt.Sprintf("Are you sure you want to delete %d template(s)?", len(templateIDs)), yes) {
 		fmt.Println("Aborted.")
 		return
@@ -129,9 +159,21 @@ func TemplateDelete(templateIDs []string, yes, sel bool) {
 }
 
 // TemplateSetPublic publishes or unpublishes one or more templates.
+// When templateIDs is empty and select is disabled, falls back to template_id or name
+// from sufy.sandbox.toml.
 func TemplateSetPublic(templateIDs []string, public, yes, sel bool, action string) {
 	client := MustNewSandboxClient()
 	ctx := context.Background()
+
+	if len(templateIDs) == 0 && !sel {
+		id, ok := templateIDFromCwdConfig()
+		if !ok {
+			return
+		}
+		if id != "" {
+			templateIDs = []string{id}
+		}
+	}
 
 	if sel {
 		templates, err := client.ListTemplates(ctx, nil)
@@ -166,6 +208,11 @@ func TemplateSetPublic(templateIDs []string, public, yes, sel bool, action strin
 			return
 		}
 		templateIDs = selected
+	}
+
+	if len(templateIDs) == 0 {
+		PrintError("at least one template ID is required (positional args or sufy.sandbox.toml)")
+		return
 	}
 
 	if !ConfirmAction(fmt.Sprintf("Are you sure you want to %s %d template(s)?", action, len(templateIDs)), yes) {
