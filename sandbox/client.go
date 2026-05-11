@@ -119,15 +119,17 @@ func credentialsEditor(cred *auth.Credentials) apis.RequestEditorFn {
 	}
 }
 
-// apiKeyEditor returns a RequestEditorFn that injects the X-API-Key header.
-// If the Authorization header is already set (e.g. by credentialsEditor), the
-// API Key is skipped to avoid sending conflicting credentials.
+// apiKeyEditor returns a RequestEditorFn that injects API Key authentication
+// on both X-API-Key and Authorization: Bearer headers, since different
+// endpoints expect different styles. Skipped if Authorization is already set
+// by credentialsEditor, so explicit credentials override the API key.
 func apiKeyEditor(apiKey string) apis.RequestEditorFn {
 	return func(ctx context.Context, req *http.Request) error {
 		if req.Header.Get("Authorization") != "" {
 			return nil
 		}
 		req.Header.Set("X-API-Key", apiKey)
+		req.Header.Set("Authorization", "Bearer "+apiKey)
 		return nil
 	}
 }
