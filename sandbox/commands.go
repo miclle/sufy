@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"connectrpc.com/connect"
@@ -38,12 +39,14 @@ type CommandResult struct {
 
 // CommandHandle is a handle to a running background command.
 type CommandHandle struct {
-	pid uint32
+	// pid is set by the event-stream goroutine and read by PID()/Kill() concurrently.
+	pid atomic.Uint32
 
 	commands *Commands
 	cancel   context.CancelFunc
 	done     chan struct{}
 	pidCh    chan struct{}
+	pidOnce  sync.Once
 	result   *CommandResult
 
 	mu        sync.Mutex
@@ -52,9 +55,18 @@ type CommandHandle struct {
 	onPtyData func(data []byte)
 }
 
+// markPIDReady stores pid and closes pidCh exactly once. Both the Start event
+// handler and Connect's caller-supplied PID may race to set it.
+func (h *CommandHandle) markPIDReady(pid uint32) {
+	h.pidOnce.Do(func() {
+		h.pid.Store(pid)
+		close(h.pidCh)
+	})
+}
+
 // PID returns the process identifier.
 func (h *CommandHandle) PID() uint32 {
-	return h.pid
+	return h.pid.Load()
 }
 
 // Wait blocks until the command completes and returns the result.
@@ -68,14 +80,14 @@ func (h *CommandHandle) Wait() (*CommandResult, error) {
 
 // Kill terminates the command.
 func (h *CommandHandle) Kill(ctx context.Context) error {
-	return h.commands.Kill(ctx, h.pid)
+	return h.commands.Kill(ctx, h.pid.Load())
 }
 
 // WaitPID blocks until the PID has been assigned or the context is cancelled.
 func (h *CommandHandle) WaitPID(ctx context.Context) (uint32, error) {
 	select {
 	case <-h.pidCh:
-		return h.pid, nil
+		return h.pid.Load(), nil
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	}
@@ -269,8 +281,7 @@ func processEventStream[T eventMessage](stream streamReceiver[T], handle *Comman
 		}
 		switch ev := event.Event.(type) {
 		case *process.ProcessEvent_Start:
-			handle.pid = ev.Start.Pid
-			close(handle.pidCh)
+			handle.markPIDReady(ev.Start.Pid)
 		case *process.ProcessEvent_Data:
 			if data := ev.Data.GetStdout(); len(data) > 0 {
 				stdout = append(stdout, data...)
@@ -340,16 +351,13 @@ func (c *Commands) Connect(ctx context.Context, pid uint32) (*CommandHandle, err
 		return nil, fmt.Errorf("connect to process: %w", err)
 	}
 
-	pidCh := make(chan struct{})
-	close(pidCh) // PID is already known.
-
 	handle := &CommandHandle{
-		pid:      pid,
 		commands: c,
 		cancel:   connectCancel,
 		done:     make(chan struct{}),
-		pidCh:    pidCh,
+		pidCh:    make(chan struct{}),
 	}
+	handle.markPIDReady(pid)
 
 	go processEventStream(stream, handle)
 

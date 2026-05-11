@@ -102,6 +102,7 @@ type testProcessHandler struct {
 	processconnect.UnimplementedProcessHandler
 
 	startFn      func(context.Context, *connect.Request[process.StartRequest], *connect.ServerStream[process.StartResponse]) error
+	connectFn    func(context.Context, *connect.Request[process.ConnectRequest], *connect.ServerStream[process.ConnectResponse]) error
 	listFn       func(context.Context, *connect.Request[process.ListRequest]) (*connect.Response[process.ListResponse], error)
 	sendInputFn  func(context.Context, *connect.Request[process.SendInputRequest]) (*connect.Response[process.SendInputResponse], error)
 	sendSignalFn func(context.Context, *connect.Request[process.SendSignalRequest]) (*connect.Response[process.SendSignalResponse], error)
@@ -114,6 +115,13 @@ func (h *testProcessHandler) Start(ctx context.Context, req *connect.Request[pro
 		return h.startFn(ctx, req, stream)
 	}
 	return h.UnimplementedProcessHandler.Start(ctx, req, stream)
+}
+
+func (h *testProcessHandler) Connect(ctx context.Context, req *connect.Request[process.ConnectRequest], stream *connect.ServerStream[process.ConnectResponse]) error {
+	if h.connectFn != nil {
+		return h.connectFn(ctx, req, stream)
+	}
+	return h.UnimplementedProcessHandler.Connect(ctx, req, stream)
 }
 
 func (h *testProcessHandler) List(ctx context.Context, req *connect.Request[process.ListRequest]) (*connect.Response[process.ListResponse], error) {
@@ -1057,6 +1065,83 @@ func TestCommandsRunWithError(t *testing.T) {
 	}
 }
 
+// TestCommandsConnectWithStartEvent guards against re-closing pidCh when the
+// server emits a Start event after Connect has already supplied a PID, and
+// asserts the caller-supplied PID wins over any later server-supplied one.
+func TestCommandsConnectWithStartEvent(t *testing.T) {
+	tests := []struct {
+		name           string
+		callerPID      uint32
+		serverStartPID uint32
+	}{
+		{
+			name:           "matching pid",
+			callerPID:      4242,
+			serverStartPID: 4242,
+		},
+		{
+			name:           "server start pid mismatches caller pid",
+			callerPID:      4242,
+			serverStartPID: 9999,
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			handler := &testProcessHandler{
+				connectFn: func(_ context.Context, req *connect.Request[process.ConnectRequest], stream *connect.ServerStream[process.ConnectResponse]) error {
+					if got := req.Msg.GetProcess().GetPid(); got != tc.callerPID {
+						t.Errorf("Connect pid selector = %d, want %d", got, tc.callerPID)
+					}
+					if err := stream.Send(&process.ConnectResponse{
+						Event: &process.ProcessEvent{
+							Event: &process.ProcessEvent_Start{
+								Start: &process.ProcessEvent_StartEvent{Pid: tc.serverStartPID},
+							},
+						},
+					}); err != nil {
+						return err
+					}
+					return stream.Send(&process.ConnectResponse{
+						Event: &process.ProcessEvent{
+							Event: &process.ProcessEvent_End{
+								End: &process.ProcessEvent_EndEvent{ExitCode: 0, Status: "exited"},
+							},
+						},
+					})
+				},
+			}
+			cmd, ts := newTestCommands(handler)
+			defer ts.Close()
+
+			handle, err := cmd.Connect(context.Background(), tc.callerPID)
+			if err != nil {
+				t.Fatalf("Connect error: %v", err)
+			}
+
+			pid, err := handle.WaitPID(context.Background())
+			if err != nil {
+				t.Fatalf("WaitPID error: %v", err)
+			}
+			if pid != tc.callerPID {
+				t.Errorf("WaitPID = %d, want caller pid %d", pid, tc.callerPID)
+			}
+
+			result, err := handle.Wait()
+			if err != nil {
+				t.Fatalf("Wait error: %v", err)
+			}
+			if result.ExitCode != 0 {
+				t.Errorf("ExitCode = %d, want 0", result.ExitCode)
+			}
+			if handle.PID() != tc.callerPID {
+				t.Errorf("PID() = %d, want caller pid %d", handle.PID(), tc.callerPID)
+			}
+		})
+	}
+}
+
 // =========================================================================
 // 4. PTY tests
 // =========================================================================
@@ -1230,9 +1315,8 @@ func TestPtyKill(t *testing.T) {
 // =========================================================================
 
 func TestCommandsWaitPID(t *testing.T) {
-	pidCh := make(chan struct{})
-	close(pidCh)
-	h := &CommandHandle{pid: 42, pidCh: pidCh}
+	h := &CommandHandle{pidCh: make(chan struct{})}
+	h.markPIDReady(42)
 	pid, err := h.WaitPID(context.Background())
 	if err != nil {
 		t.Fatalf("WaitPID error: %v", err)
@@ -1243,8 +1327,7 @@ func TestCommandsWaitPID(t *testing.T) {
 }
 
 func TestCommandsWaitPIDTimeout(t *testing.T) {
-	pidCh := make(chan struct{})
-	h := &CommandHandle{pid: 0, pidCh: pidCh}
+	h := &CommandHandle{pidCh: make(chan struct{})}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	_, err := h.WaitPID(ctx)
