@@ -336,6 +336,9 @@ func TestAPIKeyEditor(t *testing.T) {
 	if got := req.Header.Get("X-API-Key"); got != "test-key" {
 		t.Errorf("expected X-API-Key 'test-key', got %q", got)
 	}
+	if got := req.Header.Get("Authorization"); got != "Bearer test-key" {
+		t.Errorf("expected Authorization 'Bearer test-key', got %q", got)
+	}
 }
 
 func TestAPIKeyEditorSkipsWhenAuthorizationSet(t *testing.T) {
@@ -345,8 +348,42 @@ func TestAPIKeyEditorSkipsWhenAuthorizationSet(t *testing.T) {
 	if err := editor(context.Background(), req); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if got := req.Header.Get("Authorization"); got != "Sufy ak:sig" {
+		t.Errorf("expected Authorization preserved, got %q", got)
+	}
 	if got := req.Header.Get("X-API-Key"); got != "" {
 		t.Errorf("expected X-API-Key to be empty when Authorization is set, got %q", got)
+	}
+}
+
+// TestAPIKeyEditorCredentialsTakesPrecedence locks in the editor ordering:
+// apiKeyEditor runs first (client-level) and writes Bearer; the credentials
+// editor runs after and must overwrite Authorization with its Sufy <sig>
+// token while leaving X-API-Key in place.
+func TestAPIKeyEditorCredentialsTakesPrecedence(t *testing.T) {
+	apiKey := apiKeyEditor("test-key")
+	req, _ := http.NewRequest("GET", "https://example.com", nil)
+
+	if err := apiKey(context.Background(), req); err != nil {
+		t.Fatalf("apiKey editor error: %v", err)
+	}
+	if got := req.Header.Get("Authorization"); got != "Bearer test-key" {
+		t.Fatalf("expected Bearer after apiKey editor, got %q", got)
+	}
+
+	credentials := func(ctx context.Context, r *http.Request) error {
+		r.Header.Set("Authorization", "Sufy ak:sig")
+		return nil
+	}
+	if err := credentials(context.Background(), req); err != nil {
+		t.Fatalf("credentials editor error: %v", err)
+	}
+
+	if got := req.Header.Get("Authorization"); got != "Sufy ak:sig" {
+		t.Errorf("expected credentials to override Bearer, got %q", got)
+	}
+	if got := req.Header.Get("X-API-Key"); got != "test-key" {
+		t.Errorf("expected X-API-Key retained, got %q", got)
 	}
 }
 
