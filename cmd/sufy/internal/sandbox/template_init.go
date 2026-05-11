@@ -25,9 +25,6 @@ import (
 	"regexp"
 	"slices"
 	"text/template"
-
-	"github.com/charmbracelet/huh"
-	"golang.org/x/term"
 )
 
 //go:embed templates/go/*.tmpl templates/typescript/*.tmpl templates/python/*.tmpl
@@ -75,47 +72,40 @@ func TemplateInit(info InitInfo) {
 
 	// Interactive prompts if args are missing.
 	if name == "" || language == "" {
-		if !term.IsTerminal(int(os.Stdin.Fd())) {
+		if !IsInteractive() {
 			PrintError("--name and --language are required in non-interactive mode")
 			return
 		}
 
-		var fields []huh.Field
-
 		if name == "" {
-			fields = append(fields,
-				huh.NewInput().
-					Title("Template name").
-					Description("Lowercase alphanumeric, hyphens and underscores allowed").
-					Value(&name).
-					Validate(func(s string) error {
-						if !validNamePattern.MatchString(s) {
-							return fmt.Errorf("name must match pattern: [a-z0-9][a-z0-9_-]*")
-						}
-						return nil
-					}),
+			input, err := PromptInput(
+				"Template name",
+				"lowercase alphanumeric, hyphens and underscores allowed",
+				func(s string) error {
+					if !validNamePattern.MatchString(s) {
+						return fmt.Errorf("name must match pattern: [a-z0-9][a-z0-9_-]*")
+					}
+					return nil
+				},
 			)
-		}
-
-		if language == "" {
-			langOptions := make([]huh.Option[string], 0, len(supportedLanguages))
-			for _, lang := range supportedLanguages {
-				langOptions = append(langOptions, huh.NewOption(lang, lang))
-			}
-			fields = append(fields,
-				huh.NewSelect[string]().
-					Title("Programming language").
-					Options(langOptions...).
-					Value(&language),
-			)
-		}
-
-		if len(fields) > 0 {
-			form := huh.NewForm(huh.NewGroup(fields...))
-			if err := form.Run(); err != nil {
+			if err != nil {
 				PrintError("cancelled: %v", err)
 				return
 			}
+			name = input
+		}
+
+		if language == "" {
+			langOptions := make([]SelectOption, 0, len(supportedLanguages))
+			for _, lang := range supportedLanguages {
+				langOptions = append(langOptions, SelectOption{Label: lang, Value: lang})
+			}
+			chosen, err := SelectOne("Programming language", langOptions)
+			if err != nil {
+				PrintError("cancelled: %v", err)
+				return
+			}
+			language = chosen
 		}
 	}
 

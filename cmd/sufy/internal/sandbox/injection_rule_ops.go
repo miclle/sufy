@@ -159,9 +159,9 @@ func InjectionRuleDelete(ruleIDs []string, yes, sel bool) {
 			label := fmt.Sprintf("%s (%s)", r.RuleID, r.Name)
 			options = append(options, SelectOption{Label: label, Value: r.RuleID})
 		}
-		selected, err := SelectMultiple("Select injection rules to delete", options)
+		selected, err := SelectMultiple("Select injection rules to delete:", options)
 		if err != nil {
-			PrintError("selection cancelled: %v", err)
+			PrintError("%v", err)
 			return
 		}
 		if len(selected) == 0 {
@@ -171,7 +171,12 @@ func InjectionRuleDelete(ruleIDs []string, yes, sel bool) {
 		ruleIDs = selected
 	}
 
-	if !ConfirmAction(fmt.Sprintf("Are you sure you want to delete %d injection rule(s)?", len(ruleIDs)), yes) {
+	if len(ruleIDs) == 0 {
+		PrintError("at least one rule ID is required (positional args or --select)")
+		return
+	}
+
+	if !ConfirmAction(fmt.Sprintf("Delete %d injection rule(s)?", len(ruleIDs)), yes) {
 		fmt.Println("Aborted.")
 		return
 	}

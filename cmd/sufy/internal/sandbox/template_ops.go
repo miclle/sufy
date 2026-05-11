@@ -127,9 +127,9 @@ func TemplateDelete(templateIDs []string, yes, sel bool) {
 			}
 			options = append(options, SelectOption{Label: label, Value: t.TemplateID})
 		}
-		selected, err := SelectMultiple("Select templates to delete", options)
+		selected, err := SelectMultiple("Select templates to delete:", options)
 		if err != nil {
-			PrintError("selection cancelled: %v", err)
+			PrintError("%v", err)
 			return
 		}
 		if len(selected) == 0 {
@@ -144,7 +144,7 @@ func TemplateDelete(templateIDs []string, yes, sel bool) {
 		return
 	}
 
-	if !ConfirmAction(fmt.Sprintf("Are you sure you want to delete %d template(s)?", len(templateIDs)), yes) {
+	if !ConfirmAction(fmt.Sprintf("Delete %d template(s)?", len(templateIDs)), yes) {
 		fmt.Println("Aborted.")
 		return
 	}
@@ -198,9 +198,9 @@ func TemplateSetPublic(templateIDs []string, public, yes, sel bool, action strin
 			label = fmt.Sprintf("%s [%s]", label, publicStr)
 			options = append(options, SelectOption{Label: label, Value: t.TemplateID})
 		}
-		selected, err := SelectMultiple(fmt.Sprintf("Select templates to %s", action), options)
+		selected, err := SelectMultiple(fmt.Sprintf("Select templates to %s:", action), options)
 		if err != nil {
-			PrintError("selection cancelled: %v", err)
+			PrintError("%v", err)
 			return
 		}
 		if len(selected) == 0 {
@@ -215,7 +215,7 @@ func TemplateSetPublic(templateIDs []string, public, yes, sel bool, action strin
 		return
 	}
 
-	if !ConfirmAction(fmt.Sprintf("Are you sure you want to %s %d template(s)?", action, len(templateIDs)), yes) {
+	if !ConfirmAction(fmt.Sprintf("%s %d template(s)?", strings.ToUpper(action[:1])+action[1:], len(templateIDs)), yes) {
 		fmt.Println("Aborted.")
 		return
 	}
