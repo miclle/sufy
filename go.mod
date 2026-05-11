@@ -2,7 +2,7 @@ module github.com/sufy-dev/sufy
 
 go 1.24.0
 
-require github.com/goplus/cobra v1.9.15 //xgo:class
+require github.com/goplus/cobra v1.10.7 //xgo:class
 
 require (
 	connectrpc.com/connect v1.19.1
@@ -44,5 +44,3 @@ require (
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 )
-
-replace github.com/goplus/cobra => /Users/miclle/github/miclle/goplus-cobra

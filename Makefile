@@ -3,7 +3,7 @@
 # --- CLI ---------------------------------------------------------------------
 
 # Output binary for `make build`. Override with `make build OUT=/usr/local/bin/sufy`.
-OUT ?= ./sufy
+OUT ?= ./bin/sufy
 
 # Regenerate xgo_autogen.go from cmd/sufy/*.gox. Required after editing any .gox file.
 xgo-gen:
