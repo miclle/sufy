@@ -1,4 +1,7 @@
-.PHONY: test unittest integrationtest staticcheck generate generate-sandbox sandbox-examples build install clean xgo-gen
+.PHONY: test unittest integrationtest integrationtest-env staticcheck generate generate-sandbox sandbox-examples build install clean xgo-gen
+
+# .env file used by *-env targets to inject test credentials.
+ENV_FILE ?= .env
 
 # --- CLI ---------------------------------------------------------------------
 
@@ -35,6 +38,15 @@ unittest:
 integrationtest:
 	go test -tags=integration -failfast -count=1 -parallel 1 -v -coverprofile=coverage.txt \
 		$$(go list ./... | grep -v 'examples')
+
+# Run integration tests with environment variables loaded from $(ENV_FILE).
+# Usage: make integrationtest-env  (uses .env by default)
+#        make integrationtest-env ENV_FILE=.env.local
+integrationtest-env:
+	@test -f $(ENV_FILE) || { echo "missing env file: $(ENV_FILE)"; exit 1; }
+	set -a; . ./$(ENV_FILE); set +a; \
+		go test -tags=integration -failfast -count=1 -parallel 1 -v -coverprofile=coverage.txt \
+			$$(go list ./... | grep -v 'examples')
 
 staticcheck:
 	staticcheck $$(go list ./... | grep -v 'examples')
