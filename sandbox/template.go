@@ -123,6 +123,22 @@ func (c *Client) StartTemplateBuild(ctx context.Context, templateID, buildID str
 	return nil
 }
 
+// RebuildTemplate creates a new waiting build on an existing template
+// (POST /templates/{templateID}). The returned response contains the new build
+// identifier; call StartTemplateBuild to trigger the build, then WaitForBuild
+// to wait for completion. Typical flow:
+// RebuildTemplate -> StartTemplateBuild -> WaitForBuild.
+func (c *Client) RebuildTemplate(ctx context.Context, templateID string, body RebuildTemplateParams) (*TemplateCreateResponse, error) {
+	resp, err := c.api.RebuildTemplateWithResponse(ctx, templateID, body.toAPI())
+	if err != nil {
+		return nil, err
+	}
+	if resp.JSON202 == nil {
+		return nil, newAPIError(resp.HTTPResponse, resp.Body)
+	}
+	return templateCreateResponseFromLegacyAPI(resp.JSON202), nil
+}
+
 // GetTemplateFiles returns an upload URL for a template build file.
 func (c *Client) GetTemplateFiles(ctx context.Context, templateID, hash string) (*TemplateBuildFileUpload, error) {
 	resp, err := c.api.GetTemplateFilesWithResponse(ctx, templateID, hash)

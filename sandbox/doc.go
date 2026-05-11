@@ -137,11 +137,17 @@
 //
 //   - [Client.ListTemplates] / [Client.GetTemplate]: list and query templates.
 //   - [Client.CreateTemplate]: create a template (returns templateID and buildID).
+//   - [Client.RebuildTemplate]: create a new waiting build on an existing template (returns a new buildID).
 //   - [Client.UpdateTemplate] / [Client.DeleteTemplate]: update or delete a template.
 //   - [Client.StartTemplateBuild] / [Client.WaitForBuild]: start a build and wait for completion.
 //   - [Client.GetTemplateBuildStatus] / [Client.GetTemplateBuildLogs]: query build status and logs.
 //   - [Client.AssignTemplateTags] / [Client.DeleteTemplateTags]: manage template tags.
 //   - [Client.GetTemplateByAlias]: look up a template by alias.
+//
+// Rebuilding an existing template follows a three-step flow:
+// [Client.RebuildTemplate] -> [Client.StartTemplateBuild] -> [Client.WaitForBuild].
+// The first call provisions a new waiting build, the second triggers it, and
+// the third waits for completion.
 //
 // # Network access
 //

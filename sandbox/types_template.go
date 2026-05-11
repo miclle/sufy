@@ -149,6 +149,44 @@ func (p *UpdateTemplateParams) toAPI() apis.UpdateTemplateJSONRequestBody {
 	}
 }
 
+// RebuildTemplateParams holds parameters for rebuilding an existing template.
+// Maps to POST /templates/{templateID}: creates a new waiting build on the
+// template and returns the new build ID for use with StartTemplateBuild.
+type RebuildTemplateParams struct {
+	// Dockerfile is the Dockerfile content used for the build.
+	Dockerfile string
+
+	// Alias is an optional alias for the template.
+	Alias *string
+
+	// CPUCount sets the sandbox CPU count.
+	CPUCount *int32
+
+	// MemoryMB sets the sandbox memory in MiB.
+	MemoryMB *int32
+
+	// StartCmd is the command executed on sandbox startup.
+	StartCmd *string
+
+	// ReadyCmd is a command used to probe readiness after build.
+	ReadyCmd *string
+
+	// TeamID is the team identifier (deprecated).
+	TeamID *string
+}
+
+func (p *RebuildTemplateParams) toAPI() apis.RebuildTemplateJSONRequestBody {
+	return apis.RebuildTemplateJSONRequestBody{
+		Alias:      p.Alias,
+		CPUCount:   p.CPUCount,
+		Dockerfile: p.Dockerfile,
+		MemoryMB:   p.MemoryMB,
+		ReadyCmd:   p.ReadyCmd,
+		StartCmd:   p.StartCmd,
+		TeamID:     p.TeamID,
+	}
+}
+
 // StartTemplateBuildParams holds parameters for starting a template build.
 type StartTemplateBuildParams struct {
 	// Force forces a full rebuild, skipping the cache.
@@ -526,6 +564,18 @@ func templateCreateResponseFromAPI(a *apis.TemplateRequestResponseV3) *TemplateC
 		Aliases:    a.Aliases,
 		Names:      a.Names,
 		Tags:       a.Tags,
+		Public:     a.Public,
+	}
+}
+
+func templateCreateResponseFromLegacyAPI(a *apis.TemplateLegacy) *TemplateCreateResponse {
+	if a == nil {
+		return nil
+	}
+	return &TemplateCreateResponse{
+		TemplateID: a.TemplateID,
+		BuildID:    a.BuildID,
+		Aliases:    a.Aliases,
 		Public:     a.Public,
 	}
 }
